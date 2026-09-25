@@ -11,8 +11,13 @@ All from [DataSF](https://data.sf.gov). A sister project to [LA Street Rules](ht
 ([ticket-clock](https://github.com/citina/ticket-clock)), and built the same way: one hand-written page, no map library,
 data split into small map cells, rebuilt weekly.
 
-**Status:** skeleton. The page layout and the driving/walking switch are in `docs/index.html`; the map, data and cards
-come next. See [PLAN.md](PLAN.md) for the data sources, page structure and milestones.
+**Status:** the map works: OpenStreetMap tiles you can pan, zoom and turn, "Use my location", DataSF's 41 Analysis
+Neighborhoods outlined, and search over neighborhoods plus a placeholder list of major streets. The street data and
+cards come next; the page layout and the driving/walking switch are in `docs/index.html`. See [PLAN.md](PLAN.md) for
+the data sources, page structure and milestones.
+
+`hoods.py` writes `docs/hoods.json`, the neighborhood outlines. The file is committed, so run it again only if DataSF
+updates the layer.
 
 ## Preview
 

@@ -15,8 +15,10 @@ and method text for each mode. The mode lives in the URL (`#drive` / `#walk`) so
 
 **Reused as-is or nearly so**
 
-- The hand-written page, no build step, no map library: SVG block lines over OpenStreetMap tiles, pan, zoom, rotate
-  to the street grid, "Use my location", and the search box (`ticket-clock/docs/streets/index.html`).
+- The hand-written page, no build step, no map library: SVG block lines over OpenStreetMap tiles, pan, zoom, a
+  two-finger turn with a compass back to north, "Use my location", and the search box
+  (`ticket-clock/docs/streets/index.html`). LA dropped its automatic turn to the street grid in ticket-clock 121ced6
+  (jumps stay north up so building names stay level); ported as LA has it now.
 - Design tokens, type (Barlow / Barlow Condensed / IBM Plex Mono), mast with sister sites, panel/card styles, method `dl`,
   About and disclaimer blocks.
 - Data split into ~1 km map cells (`data/cells/{key}.json`) so the page only loads what's on screen, plus
@@ -156,8 +158,11 @@ data.sf.gov.
 ## 5. Milestones
 
 - [x] **0. Setup** — folder, git repo, this plan, page skeleton with the mode switch.
-- [ ] **1. Map** — port the SVG + OSM tile map from LA Street Rules; SF bounds; neighborhoods; search over street names.
+- [x] **1. Map** — port the SVG + OSM tile map from LA Street Rules; SF bounds; neighborhoods (`hoods.py` →
+  `docs/hoods.json`); search over neighborhoods and, until milestone 2, a placeholder list of ~80 major streets.
 - [ ] **2. Driving data** — fetch + analyze centerlines, sweeping, regulations, meters + policies, citations (2 yrs), garages; block card cards 2–4 and 6.
+  Replace the placeholder street list with `streets.json`; cap a picked neighborhood's zoom at the block-showing width,
+  centered on its blocks, as LA does.
 - [ ] **3. Can I park here?** — time control + rules evaluator; map recolors by chosen time.
 - [ ] **4. Walking data** — crashes (5 yrs), HIN, protections, speed limits; segment/intersection card; daylight/dark.
 - [ ] **5. Temporary** — closures and tow zones at the chosen time.

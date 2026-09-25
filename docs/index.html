@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SF Streets</title>
-<!-- Hand-written page (no build step). SKELETON: layout, mode switch and placeholder cards only; see PLAN.md for what fills each part. -->
+<!-- Hand-written page (no build step). The map works (milestone 1); the cards are still placeholders. See PLAN.md for what fills each part. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -107,27 +107,47 @@
   .findbar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
   .locbtn{appearance:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--ink);background:var(--ink);color:var(--plane);
           font:600 15px "Barlow",system-ui,sans-serif;padding:7px 14px;border-radius:8px;min-height:40px}
+  .locbtn:disabled{opacity:.6;cursor:progress}
   .locbtn svg{width:16px;height:16px;flex:none}
   .searchbox{position:relative;flex:1 1 220px;max-width:420px}
   .searchbox input{font:15px "Barlow",system-ui,sans-serif;color:var(--ink);background:var(--surface);border:1px solid var(--edge);
         border-radius:8px;padding:8px 10px;min-height:40px;width:100%}
+  .sugg{position:absolute;z-index:10;left:0;right:0;top:calc(100% + 4px);margin:0;padding:4px;list-style:none;background:var(--surface);
+        border:1px solid var(--edge);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.12)}
+  .sugg li{padding:7px 10px;border-radius:6px;cursor:pointer;font-size:15px;display:flex;justify-content:space-between;gap:12px}
+  .sugg li small{color:var(--ink-3);font-size:12.5px;white-space:nowrap}
+  .sugg li[aria-selected="true"],.sugg li:hover{background:var(--well)}
+  .find-msg{font-size:14.5px;line-height:1.5;margin:12px 0 0;max-width:var(--measure)}
+  .find-msg:empty{display:none}
   .layers{margin:12px 0 0}
   .mapwrap{position:relative;margin:10px 0 0;background:var(--map-bg);border:1px solid var(--rule);border-radius:12px;overflow:hidden;
-           height:clamp(360px,70vh,680px)}
+           touch-action:none;user-select:none;-webkit-user-select:none;height:clamp(360px,70vh,680px)}
   @media (max-width:1000px){ .mapwrap{height:clamp(280px,60vh,520px)} }
-  .mapwrap svg{position:absolute;inset:0;width:100%;height:100%;max-width:none}
-  .tiles image{opacity:.72}
+  .mapwrap svg{position:relative;width:100%;height:100%;display:block;max-width:none}
+  /* the map images sit on top of the lines and multiply with them, like a highlighter on paper,
+     so street names stay readable over a line */
+  .tiles{position:absolute;inset:0;pointer-events:none;opacity:.72;mix-blend-mode:multiply}
+  /* neighborhoods: outlines to pick while the whole city shows; closer in, only faint dashed edges */
+  .hoods path{fill:var(--map-line);fill-opacity:0;stroke:var(--map-sel);stroke-opacity:.5;stroke-width:1.5;stroke-linejoin:round;
+              vector-effect:non-scaling-stroke;cursor:pointer}
+  .hoods path:hover{fill-opacity:.4}
+  .hoods path.on{fill-opacity:.25;stroke-opacity:.9;stroke-width:2}
+  .hoods.near path{pointer-events:none;fill:none;stroke-opacity:.4;stroke-dasharray:7 5}
+  .hoods.near path.on{stroke-opacity:.85;stroke-dasharray:none}
   .zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:4px}
   .zoom button{width:34px;height:34px;border-radius:8px;border:1px solid var(--edge);background:#fcfcfb;color:#14140f;
                font:600 18px/1 "Barlow",sans-serif;cursor:pointer}
   .zoom button.fit{font-size:11px;font-family:"IBM Plex Mono",monospace}
+  .zoom button.north svg{width:20px;height:20px;margin:0 auto}   /* its needle turns with the map */
   .maptag{position:absolute;bottom:6px;font-size:11px;padding:1px 6px;border-radius:4px;color:#56554f;background:rgba(252,252,251,.88)}
   .maptag a{color:inherit}
   .maptag.r{right:8px}
-  .maptag.hint{left:50%;top:10px;bottom:auto;transform:translateX(-50%);font-size:13px;padding:4px 10px;color:#14140f;white-space:nowrap;
-               border:1px dashed #8a8880}
+  .maptag.hint{left:50%;top:10px;bottom:auto;transform:translateX(-50%);font-size:13px;padding:4px 10px;color:#14140f;white-space:nowrap}
   @media (max-width:560px){ .maptag.hint{white-space:normal;text-align:center;width:max-content;max-width:calc(100% - 110px);left:10px;transform:none} }
+  #tip{position:fixed;z-index:20;pointer-events:none;background:var(--panel);color:var(--panel-ink);font-size:12.5px;line-height:1.45;
+       padding:8px 10px;border-radius:6px;max-width:260px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
   .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2);margin:10px 0 0;padding:0;list-style:none}
+  .legend:empty{display:none}
   .legend li{display:inline-flex;align-items:center;gap:6px}
   .sw{width:18px;height:4px;border-radius:2px;display:inline-block;flex:none}
   .sw.thick{height:7px;border-radius:4px}
@@ -168,6 +188,8 @@
   .method dt{font-weight:600}
   .method dd{margin:0;color:var(--ink-2)}
   @media (max-width:560px){ .method{grid-template-columns:1fr;gap:4px} .method dd{margin-bottom:12px} }
+  footer{margin-top:44px;font-size:13px;color:var(--ink-3)}
+  footer ul{padding-left:18px;margin:6px 0 0}
   @media (prefers-reduced-motion:no-preference){ .chip,.mode{transition:background-color .15s,border-color .15s,color .15s} }
 </style>
 
@@ -195,11 +217,14 @@
   <div class="explorer">
     <div class="mapcol">
       <div class="findbar">
-        <button class="locbtn" id="locBtn" disabled title="Milestone 1"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2" fill="currentColor"/><path d="M8 0v2.6M8 13.4V16M0 8h2.6M13.4 8H16" stroke="currentColor" stroke-width="1.6"/></svg>Use my location</button>
+        <button class="locbtn" id="locBtn"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2" fill="currentColor"/><path d="M8 0v2.6M8 13.4V16M0 8h2.6M13.4 8H16" stroke="currentColor" stroke-width="1.6"/></svg>Use my location</button>
         <div class="searchbox">
-          <input type="search" id="q" placeholder="Street, address, corner or neighborhood" autocomplete="off" spellcheck="false" aria-label="Find a street, address, corner or neighborhood">
+          <input type="search" id="q" placeholder="Street, address, corner or neighborhood" autocomplete="off" spellcheck="false"
+                 role="combobox" aria-label="Find a street, address, corner or neighborhood" aria-expanded="false" aria-controls="sugg" aria-autocomplete="list">
+          <ul class="sugg" id="sugg" role="listbox" hidden></ul>
         </div>
       </div>
+      <div aria-live="polite"><p class="find-msg" id="findMsg"></p></div>
 
       <!-- when: driving asks when you'll park and for how long; walking asks day or night -->
       <div class="ctl-row" data-for="drive">
@@ -239,12 +264,13 @@
       </div>
 
       <div class="mapwrap" id="mapwrap">
-        <svg id="map" preserveAspectRatio="xMidYMid slice" aria-label="Map of San Francisco"><g class="tiles" id="tiles"></g></svg>
-        <div class="zoom"><button aria-label="Zoom in" disabled>+</button><button aria-label="Zoom out" disabled>−</button><button class="fit" aria-label="Show all of San Francisco" disabled>SF</button></div>
-        <span class="maptag hint">Placeholder map · blocks, pan and zoom come in milestone 1</span>
-        <span class="maptag r">© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors</span>
+        <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="zfit" class="fit" aria-label="Show all of San Francisco">SF</button><button id="znorth" class="north" aria-label="Turn the map back to north up" title="Turn north back up" hidden><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 13.6 10H6.4Z" fill="var(--sign-red)"/><path d="M10 18.5 6.4 10h7.2Z" fill="currentColor" fill-opacity=".4"/></svg></button></div>
+        <span class="maptag hint" id="hint" hidden>Pick a neighborhood to zoom in</span>
+        <span class="maptag hint" id="hoodTag" hidden></span>
+        <span class="maptag r">© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · neighborhoods: DataSF</span>
       </div>
 
+      <ul class="legend" id="legend"></ul>
       <ul class="legend" data-for="drive">
         <li><span class="sw ramp"></span>tickets per month on the block, fewer → more</li>
         <li><span class="sw thick" style="background:var(--sign-red)"></span>no parking at the time you picked</li>
@@ -361,6 +387,13 @@
       <dt>Data</dt><dd>Traffic crashes resulting in injury or death (SFPD and SFDPH, via data.sf.gov) from the last five years where a pedestrian was involved; the 2024 High Injury Network; signals, crosswalks, safety zones, speed limits and traffic calming.</dd>
       <dt>Limits</dt><dd>Only reported crashes with an injury are counted, and the data runs about two months behind. A street with few crashes may just have few people walking on it; counts aren't adjusted for foot traffic.</dd>
     </dl>
+    <footer>
+      Sources
+      <ul>
+        <li><a href="https://data.sf.gov/Geographic-Locations-and-Boundaries/Analysis-Neighborhoods/j2bu-swwd">Analysis Neighborhoods</a>, DataSF (dataset j2bu-swwd, public domain): the neighborhood outlines on the map</li>
+        <li>Map © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, loaded from openstreetmap.org</li>
+      </ul>
+    </footer>
   </section>
 
   <section id="about">
@@ -370,13 +403,24 @@
 
   <div class="note end">
     <p><b>Not a guide to parking illegally, and not a promise of safety.</b> This page shows the city's posted rules, the tickets it has written, and the crashes it has recorded. Past tickets and crashes don't predict the next one.</p>
+    <p><b>What the page loads.</b> The map images come from OpenStreetMap, one small area at a time, so it can tell roughly which part of the city you're looking at. If you use your location, it only moves the map; the exact spot isn't sent anywhere.</p>
   </div>
 </main>
+<div id="tip" hidden></div>
 
 <script>
 (function(){
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const NS='http://www.w3.org/2000/svg';
+function S(tag, attrs, parent){ const e=document.createElementNS(NS,tag); for(const k in (attrs||{})) e.setAttribute(k, attrs[k]); if(parent) parent.appendChild(e); return e; }
+function H(tag, props, parent){ const e=document.createElement(tag); Object.assign(e, props||{}); if(parent) parent.appendChild(e); return e; }
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tip=$('#tip');
+function showTip(e, html){ tip.innerHTML=html; tip.hidden=false; const r=tip.getBoundingClientRect(); let x=e.clientX+14, y=e.clientY+14;
+  if(x+r.width>innerWidth-8) x=e.clientX-r.width-14; if(y+r.height>innerHeight-8) y=e.clientY-r.height-14; tip.style.left=x+'px'; tip.style.top=y+'px'; }
+function hideTip(){ tip.hidden=true; }
+const stacked=()=>matchMedia('(max-width:1000px)').matches, still=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const msg=html=>{ $('#findMsg').innerHTML=html; };
 
 // ---------- mode: #drive / #walk in the URL, remembered on this device ----------
 function setMode(m, push){
@@ -402,20 +446,241 @@ $$('.chips').forEach(g=>{
   });
 });
 
-// ---------- placeholder map: OpenStreetMap tiles over San Francisco, no pan or zoom yet ----------
-const Z=13, W=256*2**Z;
-const px=(lon,lat)=>{ const r=lat*Math.PI/180; return [(lon+180)/360*W, (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*W]; };
-const [x0,y0]=px(-122.515,37.834), [x1,y1]=px(-122.355,37.706);
-const svg=$('#map'), g=$('#tiles');
-svg.setAttribute('viewBox',`${x0} ${y0} ${x1-x0} ${y1-y0}`);
-// a margin of tiles so the "slice" fit never shows an empty edge
-for(let tx=Math.floor(x0/256)-2; tx<=Math.floor(x1/256)+2; tx++)
-  for(let ty=Math.floor(y0/256)-1; ty<=Math.floor(y1/256)+1; ty++){
-    const im=document.createElementNS(NS,'image');
-    im.setAttribute('href',`https://tile.openstreetmap.org/${Z}/${tx}/${ty}.png`);
-    im.setAttribute('x',tx*256); im.setAttribute('y',ty*256); im.setAttribute('width',256); im.setAttribute('height',256);
-    g.appendChild(im);
+/* ============ map geometry: zoom-17 Web Mercator pixels (about 0.95 m each in SF), shifted to a local origin ============ */
+const N17=2**17*256, PX_M=156543.03392*Math.cos(37.76*Math.PI/180)/2**17;
+function z17(lat, lon){ const r=lat*Math.PI/180; return [(lon+180)/360*N17, (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*N17]; }
+const O=z17(37.76,-122.44).map(Math.round);   // keeps SVG numbers small enough to stay exact
+const SF=[-122.515,37.708,-122.357,37.834];    // the city's neighborhoods, Treasure Island included: the map's home view and pan limits
+const toXY=(lat,lon)=>z17(lat,lon).map((v,i)=>v-O[i]);
+const [LX0,LY1]=toXY(SF[1],SF[0]), [LX1,LY0]=toXY(SF[3],SF[2]);
+const BOX_M=800, SHOW_M=3000;                  // a found place shows about 800 m; under 3 km the neighborhoods turn to edges (and the blocks will load)
+const TILE_URL=(z,x,y)=>`https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+
+let HOODS=null, fix=null;
+
+/* ============ the map, as on LA Street Rules ============ */
+const wrap=$('#mapwrap');
+const tileBox=H('div',{className:'tiles'}), tileSvg=S('svg',{'aria-hidden':'true'},tileBox);
+const svg=S('svg',{role:'img','aria-label':'Map of San Francisco and its neighborhoods'});
+wrap.insertBefore(svg, wrap.firstChild); wrap.insertBefore(tileBox, svg.nextSibling);   // images over the lines (see .tiles)
+// every layer sits in a group that turns about the view's center by rot (radians, clockwise); 0 is north up
+const gRotT=S('g',{},tileSvg), gTiles=S('g',{},gRotT), gRot=S('g',{},svg);
+const gHood=S('g',{class:'hoods'},gRot), gYou=S('g',{},gRot);
+let vb={x:(LX0+LX1)/2, y:(LY0+LY1)/2, w:LX1-LX0, h:0}, rot=0;
+const north=$('#znorth'), turnNorm=a=>Math.atan2(Math.sin(a),Math.cos(a));
+const minW=()=>150/PX_M, maxW=()=>Math.max(LX1-LX0, (LY1-LY0)*wrap.clientWidth/Math.max(1,wrap.clientHeight));
+function setVB(){
+  const asp=wrap.clientHeight/Math.max(1,wrap.clientWidth);
+  vb.w=Math.min(maxW(),Math.max(minW(),vb.w)); vb.h=vb.w*asp;
+  const cx=Math.min(LX1,Math.max(LX0,vb.x+vb.w/2)), cy=Math.min(LY1,Math.max(LY0,vb.y+vb.h/2));
+  vb.x=cx-vb.w/2; vb.y=cy-vb.h/2;
+  svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`); tileSvg.setAttribute('viewBox',svg.getAttribute('viewBox'));
+  [gRot,gRotT].forEach(g=>rot?g.setAttribute('transform',`rotate(${rot*180/Math.PI} ${cx} ${cy})`):g.removeAttribute('transform'));
+  north.hidden=!rot; north.querySelector('svg').style.transform=`rotate(${rot}rad)`;
+  drawTiles(); drawYou(); showNear();
+}
+// the part of the map on screen, as a box in map units (bigger than the view while the map is turned)
+function viewBounds(){ const c=Math.abs(Math.cos(rot)), s=Math.abs(Math.sin(rot)), hx=(c*vb.w+s*vb.h)/2, hy=(s*vb.w+c*vb.h)/2, cx=vb.x+vb.w/2, cy=vb.y+vb.h/2;
+  return [cx-hx,cy-hy,cx+hx,cy+hy]; }
+function centerOn(x, y, w){ vb.w=Math.min(maxW(),Math.max(minW(),w)); w=vb.w; const asp=wrap.clientHeight/Math.max(1,wrap.clientWidth); vb.x=x-w/2; vb.y=y-w*asp/2; setVB(); }
+// jumps (search, your location) show the map north up; two fingers can still turn it
+function jumpTo(x, y, w){ rot=0; centerOn(x,y,w); }
+// fit a box in map units, with a margin, but no closer than about 800 m
+function fitBox(x0, y0, x1, y1){ jumpTo((x0+x1)/2,(y0+y1)/2,Math.max((x1-x0)*1.1,(y1-y0)*1.1*wrap.clientWidth/Math.max(1,wrap.clientHeight),BOX_M/PX_M)); }
+function fitSF(){ pickHood(-1); fitBox(LX0,LY0,LX1,LY1); }
+
+// OpenStreetMap tiles for the view only (their policy allows what a reader is looking at, nothing ahead of time)
+const tileGroups=new Map();   // zoom -> {g, tiles: Map(key -> image), pending}
+let tz=null;
+function drawTiles(){
+  // tiles at their own size (256 px), so the map's labels read at their normal size
+  const cw=wrap.clientWidth||600;
+  const z=Math.max(10,Math.min(19,Math.round(17+Math.log2(cw/vb.w)))), size=256*2**(17-z), pad=vb.w/cw;
+  if(!tileGroups.has(z)) tileGroups.set(z,{g:S('g',{},gTiles), tiles:new Map(), pending:0});
+  const L=tileGroups.get(z); gTiles.appendChild(L.g);   // the current zoom draws on top while the old one fills the gaps
+  const [bx0,by0,bx1,by1]=viewBounds(), x0=Math.floor((bx0+O[0])/size), x1=Math.floor((bx1+O[0])/size), y0=Math.floor((by0+O[1])/size), y1=Math.floor((by1+O[1])/size), want=new Set();
+  for(let x=x0;x<=x1;x++) for(let y=y0;y<=y1;y++){ const key=`${x}/${y}`; want.add(key); if(L.tiles.has(key)) continue;
+    const im=S('image',{href:TILE_URL(z,x,y),x:x*size-O[0],y:y*size-O[1],width:size+pad,height:size+pad,preserveAspectRatio:'none'},L.g);
+    L.pending++; const done=()=>{ L.pending--; if(!L.pending && tz===z) dropOld(); }; im.addEventListener('load',done,{once:true}); im.addEventListener('error',done,{once:true});
+    L.tiles.set(key,im); }
+  L.tiles.forEach((im,key)=>{ if(!want.has(key)){ im.remove(); L.tiles.delete(key); } });
+  if(tz!==z){ tz=z; if(!L.pending) dropOld(); }
+}
+function dropOld(){ tileGroups.forEach((L,z)=>{ if(z!==tz){ L.g.remove(); tileGroups.delete(z); } }); }
+
+/* pan & zoom: drag, pinch, ⌘/ctrl-scroll, double-click, buttons; two fingers can also turn the map */
+// a point on screen to map units: undo the turn about the view's center
+function toMap(e){ const r=svg.getBoundingClientRect(), sx=((e.clientX-r.left)/r.width-.5)*vb.w, sy=((e.clientY-r.top)/r.height-.5)*vb.h, c=Math.cos(rot), s=Math.sin(rot);
+  return {x:vb.x+vb.w/2+c*sx+s*sy, y:vb.y+vb.h/2-s*sx+c*sy}; }
+function zoomAt(f, cx, cy){ const nw=Math.min(maxW(),Math.max(minW(),vb.w*f)), k=nw/vb.w; vb.x=cx-(cx-vb.x)*k; vb.y=cy-(cy-vb.y)*k; vb.w=nw; setVB(); }
+wrap.addEventListener('wheel',e=>{ if(!(e.ctrlKey||e.metaKey)) return; e.preventDefault(); const p=toMap(e); zoomAt(Math.exp(e.deltaY*0.01),p.x,p.y); },{passive:false});
+const ptrs=new Map(); let dragged=false, down=null, pinch=null;
+// two fingers: the map spot between them stays under them while they pinch, and once they twist past about 11° the map turns with them
+const TWIST=0.2, SNAP=0.07;
+const fingers=()=>{ const [a,b]=[...ptrs.values()]; return {x:(a.x+b.x)/2, y:(a.y+b.y)/2, d:Math.hypot(a.x-b.x,a.y-b.y), a:Math.atan2(b.y-a.y,b.x-a.x)}; };
+wrap.addEventListener('pointerdown',e=>{ if(e.target.closest('.zoom')||e.target.closest('a')) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); down={x:e.clientX,y:e.clientY}; dragged=false;
+  if(ptrs.size===2){ const f=fingers(); pinch={...f, p:toMap({clientX:f.x,clientY:f.y}), twist:0, turning:false}; } });
+wrap.addEventListener('pointermove',e=>{ if(!ptrs.has(e.pointerId)) return; const prev=ptrs.get(e.pointerId), r=svg.getBoundingClientRect();
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2 && pinch){ const f=fingers(), da=turnNorm(f.a-pinch.a);
+    if(pinch.turning) rot=turnNorm(rot+da); else if(Math.abs(pinch.twist+=da)>TWIST) pinch.turning=true;
+    vb.w=Math.min(maxW(),Math.max(minW(),vb.w*pinch.d/Math.max(1,f.d))); vb.h=vb.w*wrap.clientHeight/Math.max(1,wrap.clientWidth);
+    const sx=((f.x-r.left)/r.width-.5)*vb.w, sy=((f.y-r.top)/r.height-.5)*vb.h, c=Math.cos(rot), s=Math.sin(rot);
+    vb.x=pinch.p.x-(c*sx+s*sy)-vb.w/2; vb.y=pinch.p.y-(c*sy-s*sx)-vb.h/2; setVB();
+    pinch.d=f.d; pinch.a=f.a; dragged=true; hideTip(); return; }
+  if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>4){ dragged=true; if(!wrap.hasPointerCapture(e.pointerId)) wrap.setPointerCapture(e.pointerId); }
+  if(dragged){ const dx=(e.clientX-prev.x)/r.width*vb.w, dy=(e.clientY-prev.y)/r.height*vb.h, c=Math.cos(rot), s=Math.sin(rot);
+    vb.x-=c*dx+s*dy; vb.y-=c*dy-s*dx; setVB(); hideTip(); } });
+const endPtr=e=>{ ptrs.delete(e.pointerId);
+  if(ptrs.size<2){ if(pinch&&pinch.turning&&Math.abs(rot)<SNAP){ rot=0; setVB(); } pinch=null; }   // a turn that ends near north snaps to it
+  setTimeout(()=>{ if(!ptrs.size) dragged=false; },0); };
+wrap.addEventListener('pointerup',endPtr); wrap.addEventListener('pointercancel',endPtr);
+svg.addEventListener('dblclick',e=>{ const p=toMap(e); zoomAt(0.5,p.x,p.y); });
+$('#zin').onclick=()=>zoomAt(0.6,vb.x+vb.w/2,vb.y+vb.h/2);
+$('#zout').onclick=()=>zoomAt(1/0.6,vb.x+vb.w/2,vb.y+vb.h/2);
+$('#zfit').onclick=fitSF;
+north.onclick=()=>{ const from=rot, t0=performance.now(), now=still();
+  const step=t=>{ const k=now?1:Math.min(1,(t-t0)/300); rot=k<1?from*(1-k)*(1-k):0; setVB(); if(k<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step); };
+
+// closer than SHOW_M, the neighborhoods turn to faint edges and the tag names the one in the middle (the blocks will load here too)
+function showNear(){ const on=vb.w*PX_M<=SHOW_M;
+  $('#hint').hidden=on||!HOODS||HOODS.some(h=>h.el.classList.contains('on')); gHood.classList.toggle('near',on); hoodTag(on); legend(); }
+function drawYou(){ gYou.innerHTML=''; if(!fix) return; const u=vb.w/(wrap.clientWidth||600);
+  S('circle',{cx:fix[0],cy:fix[1],r:7*u,fill:'var(--accent)',stroke:'var(--map-bg)','stroke-width':2.5,'vector-effect':'non-scaling-stroke'},gYou); }
+// after a search on a phone, bring the map into view if it's off screen
+function showMap(){ if(!stacked()) return; const r=wrap.getBoundingClientRect();
+  if(r.top<0||r.bottom>innerHeight) wrap.scrollIntoView({block:r.height>innerHeight?'start':'nearest',behavior:still()?'auto':'smooth'}); }
+
+/* ============ neighborhoods (hoods.json, DataSF's Analysis Neighborhoods): picked on the map while the whole city shows,
+   or by search; closer in, the tag names the one in the middle of the map ============ */
+fetch('hoods.json').then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(d=>{
+  // each ring: its first point in zoom-17 pixels, then the steps to the next ones
+  HOODS=d.h.map(([name,...rs],i)=>{ let x0=Infinity, y0=Infinity, x1=-Infinity, y1=-Infinity;
+    const rings=rs.map(f=>{ const p=[]; let x=f[0]-O[0], y=f[1]-O[1];
+      for(let k=0;k<f.length;k+=2){ if(k){ x+=f[k]; y+=f[k+1]; } p.push(x,y); x0=Math.min(x0,x); x1=Math.max(x1,x); y0=Math.min(y0,y); y1=Math.max(y1,y); }
+      return p; });
+    const el=S('path',{'fill-rule':'evenodd',d:rings.map(p=>{ let s=''; for(let k=0;k<p.length;k+=2) s+=(k?'L':'M')+p[k]+','+p[k+1]; return s+'Z'; }).join('')},gHood);
+    el.addEventListener('click',()=>{ if(!dragged){ hideTip(); goHood(i); } });
+    el.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') showTip(e,`<b>${esc(name)}</b>`); });
+    el.addEventListener('pointerleave',hideTip);
+    return {name, rings, box:[x0,y0,x1,y1], el}; });
+  showNear();
+}).catch(e=>console.warn('no neighborhoods:',e));
+function inHood(h, x, y){ const [x0,y0,x1,y1]=h.box; if(x<x0||x>x1||y<y0||y>y1) return false; let c=false;
+  h.rings.forEach(p=>{ for(let i=0,j=p.length-2;i<p.length;j=i,i+=2){ const yi=p[i+1], yj=p[j+1];
+    if((yi>y)!==(yj>y) && x<(p[j]-p[i])*(y-yi)/(yj-yi)+p[i]) c=!c; } });
+  return c; }
+function hoodTag(near){ const t=$('#hoodTag'), h=near&&HOODS&&HOODS.find(h=>inHood(h,vb.x+vb.w/2,vb.y+vb.h/2));
+  t.hidden=!h; if(h) t.textContent=h.name; }
+function pickHood(i){ if(HOODS) HOODS.forEach((h,k)=>h.el.classList.toggle('on',k===i)); showNear(); }
+// fit the whole neighborhood. (LA Street Rules caps this at SHOW_M so the blocks load, centered on where they are;
+// that comes back with the block data.)
+function goHood(i){ pickHood(i); fitBox(...HOODS[i].box); }
+
+/* ============ search: neighborhoods, and for now a few dozen major streets ============ */
+// PLACEHOLDER until the street data (milestone 2): [name, west, south, east, north] for some major streets, from the
+// extent of their segments in Streets – Active and Retired (3psu-pn9h). Picking one only moves the map there.
+const STREETS=[
+["3rd St",-122.4034,37.7162,-122.387,37.7876],["9th Ave",-122.4684,37.7471,-122.4647,37.7868],["16th St",-122.4373,37.7638,-122.3861,37.7671],["19th Ave",-122.4788,37.7138,-122.4693,37.7867],
+["24th St",-122.4428,37.7508,-122.3802,37.7545],["Alemany Blvd",-122.4718,37.7082,-122.407,37.7376],["Brannan St",-122.408,37.7692,-122.388,37.7848],["Broadway",-122.4464,37.7928,-122.3977,37.7992],
+["Bryant St",-122.4109,37.748,-122.3878,37.7871],["Bush St",-122.4464,37.7854,-122.3991,37.7913],["California St",-122.4935,37.7835,-122.3964,37.7937],["Castro St",-122.4368,37.7346,-122.4324,37.7703],
+["Cesar Chavez St",-122.4381,37.7471,-122.3827,37.7506],["Chestnut St",-122.4475,37.7994,-122.4034,37.8052],["Church St",-122.4292,37.7397,-122.4265,37.7704],["Clay St",-122.4593,37.7875,-122.3956,37.7956],
+["Clement St",-122.5063,37.781,-122.459,37.7832],["Columbus Ave",-122.4196,37.7955,-122.4033,37.8068],["Divisadero St",-122.444,37.7673,-122.4365,37.8056],["Eddy St",-122.4411,37.7803,-122.4077,37.7847],
+["Evans Ave",-122.3973,37.7324,-122.3698,37.7497],["Fell St",-122.4541,37.7714,-122.4175,37.7766],["Fillmore St",-122.4375,37.7694,-122.4299,37.8064],["Folsom St",-122.4156,37.7333,-122.39,37.7908],
+["Franklin St",-122.4278,37.774,-122.4207,37.8071],["Fulton St",-122.5111,37.7713,-122.4151,37.7798],["Geary Blvd",-122.5094,37.779,-122.4214,37.7857],["Geneva Ave",-122.4523,37.7083,-122.4201,37.7231],
+["Golden Gate Ave",-122.4585,37.7762,-122.4103,37.7823],["Gough St",-122.4284,37.7718,-122.4203,37.8037],["Grant Ave",-122.4091,37.7867,-122.4046,37.8081],["Great Hwy",-122.5119,37.7252,-122.503,37.7768],
+["Guerrero St",-122.4249,37.745,-122.4222,37.7707],["Haight St",-122.4535,37.7692,-122.4219,37.7732],["Harrison St",-122.4134,37.7443,-122.3885,37.7896],["Hayes St",-122.4543,37.7729,-122.416,37.7778],
+["Howard St",-122.4176,37.7704,-122.3911,37.7924],["Hyde St",-122.421,37.7787,-122.4147,37.8088],["Irving St",-122.5096,37.7621,-122.4577,37.7645],["Jackson St",-122.4595,37.7893,-122.3971,37.7972],
+["John F Kennedy Dr",-122.5109,37.7667,-122.454,37.7726],["Judah St",-122.5094,37.7603,-122.4619,37.7624],["Kearny St",-122.4073,37.7876,-122.4034,37.8074],["King St",-122.4024,37.7699,-122.3881,37.7818],
+["Larkin St",-122.4222,37.7775,-122.4163,37.8064],["Leavenworth St",-122.4191,37.78,-122.4135,37.8078],["Lincoln Way",-122.5103,37.764,-122.4578,37.7663],["Lombard St",-122.4512,37.7974,-122.402,37.8041],
+["Market St",-122.445,37.7501,-122.3947,37.7945],["Masonic Ave",-122.4477,37.7653,-122.4427,37.7863],["McAllister St",-122.4584,37.7752,-122.4117,37.7812],["Mission St",-122.4543,37.7083,-122.3925,37.7938],
+["Monterey Blvd",-122.4713,37.73,-122.4344,37.7333],["Noriega St",-122.5084,37.7528,-122.4636,37.7559],["Oak St",-122.454,37.771,-122.4194,37.7754],["Ocean Ave",-122.4951,37.7229,-122.4354,37.7327],
+["Octavia St",-122.43,37.7717,-122.4234,37.8035],["O'Farrell St",-122.4475,37.7811,-122.4046,37.7868],["Park Presidio Blvd",-122.4727,37.7731,-122.4717,37.7863],["Pine St",-122.4466,37.7863,-122.3974,37.7925],
+["Polk St",-122.4238,37.7765,-122.4175,37.8062],["Portola Dr",-122.4716,37.7347,-122.4433,37.7505],["Post St",-122.446,37.7835,-122.402,37.7891],["Potrero Ave",-122.408,37.7496,-122.4053,37.7692],
+["Powell St",-122.4125,37.7846,-122.4073,37.8086],["Sacramento St",-122.4593,37.7866,-122.3966,37.7946],["San Bruno Ave",-122.4086,37.7122,-122.3995,37.7697],["Silver Ave",-122.4334,37.7285,-122.3965,37.7372],
+["Stanyan St",-122.4552,37.7581,-122.4513,37.7776],["Stockton St",-122.4107,37.7857,-122.4058,37.8081],["Sunset Blvd",-122.4965,37.7296,-122.4935,37.7655],["Sutter St",-122.4462,37.7844,-122.4002,37.7903],
+["Taraval St",-122.5069,37.7417,-122.4637,37.7437],["Telegraph Hill Blvd",-122.4067,37.8018,-122.4054,37.8036],["The Embarcadero",-122.4158,37.7818,-122.3877,37.809],["Townsend St",-122.4044,37.7697,-122.3883,37.7818],
+["Turk St",-122.4421,37.7792,-122.409,37.7834],["Union St",-122.4469,37.7956,-122.4001,37.8017],["Valencia St",-122.4226,37.7454,-122.42,37.7725],["Van Ness Ave",-122.4266,37.7751,-122.4192,37.8082],
+["Washington St",-122.4594,37.7884,-122.3954,37.7967]];
+const q=$('#q'), sugg=$('#sugg');
+let active=-1, options=[];
+const ABBR={avenue:'ave',av:'ave',street:'st',boulevard:'blvd',bl:'blvd',drive:'dr',place:'pl',road:'rd',lane:'ln',court:'ct',terrace:'ter',highway:'hwy',north:'n',south:'s',east:'e',west:'w'};
+const words=s=>s.toLowerCase().replace(/['’]/g,'').replace(/[.,#()\/&-]/g,' ').split(/\s+/).filter(Boolean).map(w=>ABBR[w]||w);
+const matches=(qw, nw)=>qw.every(w=>nw.some(x=>x.startsWith(w)));
+// a house number is skipped for now: finding one needs the street data
+const queryWords=()=>words(q.value.trim().replace(/^\d+\s*/,''));
+function renderSugg(){ sugg.innerHTML=''; sugg.hidden=!options.length; q.setAttribute('aria-expanded',!!options.length);
+  options.forEach((o,k)=>{ const li=H('li',{id:'opt'+k,role:'option'},sugg); li.append(o.label); H('small',{textContent:o.note},li);
+    li.setAttribute('aria-selected',k===active); li.addEventListener('mousedown',e=>{ e.preventDefault(); choose(o); }); });
+  if(active>=0) q.setAttribute('aria-activedescendant','opt'+active); else q.removeAttribute('aria-activedescendant'); }
+function suggest(){
+  const qw=queryWords(); options=[];
+  if(qw.length){
+    options=STREETS.map((s,i)=>({i,nw:words(s[0])})).filter(r=>matches(qw,r.nw))
+      .sort((a,b)=>qw.filter(w=>b.nw.includes(w)).length-qw.filter(w=>a.nw.includes(w)).length||a.nw.length-b.nw.length).slice(0,6)
+      .map(r=>({s:r.i,label:STREETS[r.i][0],note:'street'}));
+    // neighborhoods after the streets, or first when the name is exactly what was typed
+    if(HOODS){ let k=0;
+      HOODS.forEach((h,i)=>{ const nw=words(h.name); if(k>=3||!matches(qw,nw)) return; k++;
+        const o={hood:i,label:h.name,note:'neighborhood'};
+        if(nw.join(' ')===qw.join(' ')) options.unshift(o); else options.push(o); }); }
   }
+  active=options.length?0:-1; renderSugg();
+}
+q.addEventListener('input',suggest);
+q.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){ if(!options.length) return; e.preventDefault(); active=(active+(e.key==='ArrowDown'?1:options.length-1))%options.length; renderSugg(); }
+  else if(e.key==='Enter'){ e.preventDefault(); if(options[active]) choose(options[active]); else if(q.value.trim()) nothingFound(); }
+  else if(e.key==='Escape'){ options=[]; renderSugg(); } });
+q.addEventListener('blur',()=>setTimeout(()=>{ options=[]; renderSugg(); },100));
+function nothingFound(){ msg(`Nothing matches “${esc(q.value.trim())}”. For now the search knows San Francisco's neighborhoods and about 80 major streets; try one, like “Valencia” or “Mission”.`); }
+function choose(o){
+  options=[]; renderSugg(); q.blur(); q.value=o.label;
+  if(o.hood!==undefined){ goHood(o.hood); msg(`<b>${esc(o.label)}</b> is outlined on the map.`); showMap(); return; }
+  const [name,w,s,e,n]=STREETS[o.s], [x0,y1]=toXY(s,w), [x1,y0]=toXY(n,e);
+  pickHood(-1); fitBox(x0,y0,x1,y1);
+  msg(`The map shows where <b>${esc(name)}</b> runs. Its blocks will be drawn once the street data is in.`); showMap();
+}
+
+/* ============ location: only moves the map ============ */
+$('#locBtn').addEventListener('click',()=>{
+  const btn=$('#locBtn');
+  if(!navigator.geolocation||!window.isSecureContext){ msg('This browser can\'t share a location with the page. Search for your street instead.'); return; }
+  btn.disabled=true; msg('Finding your location…'); q.value='';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    btn.disabled=false; const {latitude:lat, longitude:lon}=pos.coords;
+    if(lat<SF[1]||lat>SF[3]||lon<SF[0]||lon>SF[2]){ fix=null; drawYou(); legend();
+      const r=Math.PI/180, km=Math.round(2*6371*Math.asin(Math.sqrt(Math.sin((lat-37.7749)*r/2)**2+Math.cos(lat*r)*Math.cos(37.7749*r)*Math.sin((lon+122.4194)*r/2)**2)));
+      msg(`You're about ${Math.max(1,km).toLocaleString()} km from San Francisco. This page only covers San Francisco's streets; you can still search for one.`); return; }
+    fix=toXY(lat,lon); pickHood(-1); jumpTo(fix[0],fix[1],BOX_M/PX_M);
+    // inside the box around the city but in none of its neighborhoods: on the water, or just over the county line
+    msg(HOODS&&!HOODS.some(h=>inHood(h,fix[0],fix[1]))?'You\'re just outside San Francisco. This page only covers the city\'s streets; you can still search for one.'
+      :'The map shows the streets around your location.');
+  }, err=>{ btn.disabled=false;
+    msg(err.code===1?'Location is off for this page. Search for your street instead, or allow location for this site in your browser and try again.'
+      :err.code===3?'Finding your location took too long. Try again, or search for your street.':'Couldn\'t get your location. Try again, or search for your street.');
+    if(err.code===1) q.focus(); }, {enableHighAccuracy:false, timeout:15000, maximumAge:60000});
+});
+
+/* ============ legend: what the map itself shows right now (each mode's layers are listed under it) ============ */
+let legendKey='';
+function legend(){ const near=vb.w*PX_M<=SHOW_M, key=[near,!!fix,!!HOODS].join();
+  if(key===legendKey) return; legendKey=key; const lg=$('#legend'); lg.innerHTML='';
+  const item=(css,txt)=>{ const li=H('li',{},lg); H('span',{className:'sw'},li).style.cssText=css; li.append(txt); };
+  // the map stays light in dark mode, so its swatches sit on a bit of the map's background
+  const edge='color-mix(in oklab,var(--map-sel) 60%,var(--map-bg))';
+  if(HOODS&&near) item(`height:0;border-top:2px dashed ${edge};box-shadow:0 0 0 3px var(--map-bg)`,'Neighborhood edge');
+  else if(HOODS) item(`width:16px;height:12px;border-radius:2px;border:1.5px solid ${edge};background:color-mix(in oklab,var(--map-line) 20%,var(--map-bg))`,'Neighborhood');
+  if(fix) item('width:12px;height:12px;border-radius:50%;background:var(--accent)','Your location'); }
+
+fitSF();
+// keep the map's center, shape and tiles right when its box changes size. A map first laid out at no size (in a tab
+// opened in the background) fits the city once it has one.
+let sized=wrap.clientWidth>0&&wrap.clientHeight>0, lastW=wrap.clientWidth, lastH=wrap.clientHeight, rt=0;
+new ResizeObserver(()=>{ const w=wrap.clientWidth, h=wrap.clientHeight; if(!w||!h||(w===lastW&&h===lastH)) return; lastW=w; lastH=h;
+  if(!sized){ sized=true; fitSF(); return; }
+  clearTimeout(rt); rt=setTimeout(()=>centerOn(vb.x+vb.w/2,vb.y+vb.h/2,vb.w),150); }).observe(wrap);
 
 // placeholder shape for the hour-of-day bars
 $('#hours').innerHTML=Array.from({length:24},(_,h)=>`<i style="height:${Math.round(20+70*Math.exp(-((h-18)**2)/18)+25*Math.exp(-((h-8)**2)/6))}%"></i>`).join('');
