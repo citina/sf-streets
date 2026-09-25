@@ -1,0 +1,9 @@
+# Raw downloads from data.sf.gov — regenerate with ./fetch_sf.py
+data/raw/
+data/*.part
+# Page data — regenerate with ./analyze_sf.py; published as a release asset, not committed
+docs/data/
+
+__pycache__/
+*.pyc
+.DS_Store
