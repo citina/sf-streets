@@ -11,10 +11,11 @@ All from [DataSF](https://data.sf.gov). A sister project to [LA Street Rules](ht
 ([ticket-clock](https://github.com/citina/ticket-clock)), and built the same way: one hand-written page, no map library,
 data split into small map cells, rebuilt weekly.
 
-**Status:** the map works: OpenStreetMap tiles you can pan, zoom and turn, "Use my location", DataSF's 41 Analysis
-Neighborhoods, and all 15,142 blocks (street segments between intersections) from the city's centerlines. Search finds
-any street, a house number on it, or a neighborhood, and a block can be linked (`#drive/13060000`). The rules, tickets
-and crashes on each block's card come next. See [PLAN.md](PLAN.md) for the data sources, page structure and milestones.
+**Status:** the map works, with DataSF's 41 Analysis Neighborhoods and all 15,142 blocks. Search finds any street, a
+house number on it, or a neighborhood, and a block can be linked (`#walk/13060000`). The walking side shows the last two
+years of pedestrian crashes, the High Injury Network, and police reports at corners (violence and robbery, drugs and
+naloxone given for overdoses), by daylight or after dark, with neighborhoods shaded citywide. The driving side shows speed
+and red-light cameras and car break-ins; its parking rules and tickets come next. See [PLAN.md](PLAN.md).
 
 `hoods.py` writes `docs/hoods.json`, the neighborhood outlines. The file is committed, so run it again only if DataSF
 updates the layer. The block data in `docs/data/` isn't committed (a weekly workflow will publish it, as in

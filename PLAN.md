@@ -73,7 +73,7 @@ All from data.sf.gov (Socrata; SODA API at `https://data.sf.gov/resource/<id>.js
 | Calming / speed | Speed Limits; Intersection-Level Traffic Calming; Mid-Block Traffic Calming; Slow Streets | `3t7b-gebn`; `bp3t-bd4t`; `abhw-ffzx`; `hkz3-itiu` | line/point | varies | school zones in speed limits |
 | Kids | Crossing Guard Intersections; Safe Routes schools | `ujya-ewdj`; `bhj2-gxup` | point | 2024 | |
 | Sidewalk width | Sidewalk Widths (2014) | `4g86-grxu` | line | historical | old; maybe skip |
-| *(decision needed)* Street crime | Police Department Incident Reports: 2018 to Present | `wg3w-h783` | point | daily | see §6 |
+| Police reports at corners | Police Department Incident Reports: 2018 to Present | `wg3w-h783` | point | daily | **In use**: robbery, violence, pickpocketing, weapons, drugs, naloxone (code 51050), car break-ins; see §6.2 |
 | *(decision needed)* Conditions | 311 Cases (streetlights out, sidewalk defects…) | `vw6y-z8j6` | point | daily | large; filter by category |
 
 The Transportation category alone has **no crash data**; the walking side needs Public Safety and Health datasets too.
@@ -101,7 +101,7 @@ chart views; the dataset behind each is named.
 
 | For | Dataset | ID | Why not yet |
 |---|---|---|---|
-| walk | Police Department Incident Reports: 2018 to Present | `wg3w-h783` | Citina's `jq29-s5wp` and `pbh9-m8j2` are maps of it. ~99k reports a year, 96% placed at an intersection CNN (snapped to a nearby corner for anonymity; the set of corners changed on 2024-04-24). Top: larceny 19k, drugs 9.7k, assault 7.7k. Waits on §6.2; if (b), robbery and assault only, per corner, opt-in |
+| walk | Police Department Incident Reports: 2018 to Present | `wg3w-h783` | Citina's `jq29-s5wp` and `pbh9-m8j2` are maps of it. ~99k reports a year, 96% placed at an intersection CNN (snapped to a nearby corner for anonymity; the set of corners changed on 2024-04-24). Top: larceny 19k, drugs 9.7k, assault 7.7k. **Now in use** (§6.2) |
 | walk | 311 Cases | `vw6y-z8j6` | Streetlights out, sidewalk defects, blocked sidewalks: conditions after dark. Large; filter by category |
 | walk | Sidewalk Widths (2014) | `4g86-grxu` | Citina's `ygcm-bt3x` is its map. Per CNN and side, but from a 2014 study |
 | walk | Pavement Condition; Street Tree Inventory | `5aye-4rtt`; `tkzw-k3nq` | Comfort layers, low priority |
@@ -112,7 +112,7 @@ chart views; the dataset behind each is named.
 |---|---|---|
 | Meter Operating Schedules | `6cqg-dxku` | Frozen in March 2014; Meter Policies `qq7v-hds4` is the daily one |
 | Map of Parking Regulations | `qbyz-te2i` | A map of `hi6h-neyh`, already planned |
-| SFPD Narcan/Naloxone Deployment | `q6vq-c5yf` | A chart of incident reports with code 51050: a measure of overdose response, not of the street, and would mark places |
+| SFPD Narcan/Naloxone Deployment | `q6vq-c5yf` | A chart of incident reports with code 51050. **Used after all** (Citina, 2026-09-25), from `wg3w-h783` directly, where each report has a corner: ~150 a year. The only overdose data with places; EMS overdose responses (`ed3a-sn39`) are weekly citywide totals and stopped in 2023 |
 | Law Enforcement Dispatched Calls: Real-Time; …Closed | `gnap-fj3t`; `2zdj-bwza` | Unverified calls; the real-time file is a rolling ~2.5-month window. Not a weekly-page measure |
 | Blockfaces | `pep9-66vw` | Curb lines from 2020, only 1.9k of 18k rows carry a CNN; offset the centerlines instead |
 | Fire, DA, jail, use of force, stops, hazard zones | various | Not about the street |
@@ -158,7 +158,7 @@ about · disclaimer
 3. **Why** — top primary collision factors (e.g. "driver failed to yield to pedestrian in crosswalk").
 4. **What's built here** — signal, continental crosswalk, painted safety zone, stop signs, speed limit, school zone, slow
    street, traffic calming.
-5. *(pending §6)* reported street crime nearby.
+5. **Reported to police at its corners** — robbery, violence, pickpocketing, weapons, drugs, naloxone; how the block ranks citywide.
 
 **Map layers**
 
@@ -201,7 +201,8 @@ data.sf.gov.
   `docs/hoods.json`); search over neighborhoods and, until milestone 2, a placeholder list of ~80 major streets (now replaced by every street).
 - [ ] **2. Driving data** — fetch + analyze centerlines *(done: blocks on the map, search, block links)*, sweeping, regulations, meters + policies, citations (2 yrs), garages; block card cards 2–4 and 6.
 - [ ] **3. Can I park here?** — time control + rules evaluator; map recolors by chosen time.
-- [ ] **4. Walking data** — crashes (5 yrs), HIN, protections, speed limits; segment/intersection card; daylight/dark.
+- [ ] **4. Walking data** — *(done: pedestrian crashes, HIN, police reports and naloxone at corners, 2 yrs, daylight/dark, neighborhood shading, card)*; still to do: protections, speed limits.
+- [x] **4a. Cameras** — speed (`d5uh-bk84`) and red-light (`uzmr-g2uc`) cameras on the driving map; car break-ins at corners.
 - [ ] **5. Temporary** — closures and tow zones at the chosen time.
 - [ ] **6. Automation** — weekly workflow, city-data release asset, Pages.
 - [ ] **7. Words** — explainer sections, method, disclaimers, README with screenshots.
@@ -216,5 +217,10 @@ data.sf.gov.
    says "avoid" over whole neighborhoods can stigmatize them. Options: (a) traffic only; (b) opt-in layer of
    person-directed incidents (robbery, assault) as counts per block, with that caveat; (c) leave for later.
    Recommendation: (a) for v1, revisit (b).
+   **Decided (Citina, 2026-09-25):** include police reports on the walking side, and naloxone (overdose) reports, from the
+   last two years; walking is now the focus. Built as corner counts by kind, shown as map layers (violence and robbery;
+   drugs and overdoses) and on the card with a citywide rank, with the reporting and patrol caveat in the card and method.
+5. **Time window.** Two years for everything dated (Citina: "2 or 3 years"). Two because SFPD changed the set of corners
+   it snaps reports to on 2024-04-24, so two years stays on one set; `WINDOW` in `analyze_sf.py` changes it.
 3. **Publish** as `citina/sf-streets` on GitHub Pages, and list it as a sister site on the ticket-clock pages?
 4. **Map in dark mode** — LA keeps the map light in dark mode; same here?

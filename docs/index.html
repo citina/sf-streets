@@ -18,6 +18,8 @@
     --measure:760px;
     /* the map stays light in dark mode too, as on LA Street Rules */
     --map-bg:#fcfcfb; --map-line:#7fb2ee; --map-sel:#14140f; --map-halo:rgba(20,20,15,.28);
+    /* walking map: blocks recede, and each layer has its own color */
+    --walk-line:#d3ccbf; --people:#6a43c9; --drugs:#0b8a7f; --cars:#c07a12;
     /* walking: danger reads warm; driving keeps the blue accent */
     --walk:#d4502a; --walk-soft:#f2b8a2; --ok:#1baf7a;
     --drive-1:#cfe0f7; --drive-2:#7fb2ee; --drive-3:#2a78d6; --drive-4:#1c4f91;
@@ -96,6 +98,8 @@
   .chip:hover{border-color:var(--ink-3)}
   .chip[aria-pressed="true"]{background:var(--ink);color:var(--plane);border-color:var(--ink)}
   .chip.sm{font-size:13px;padding:3px 10px;min-height:30px}
+  .chip:disabled,.chip:disabled:hover{opacity:.45;cursor:default;border-color:var(--edge)}
+  @media (max-width:560px){ .layers .chip:disabled{display:none} }   /* layers still to come, only where there's room */
   .ctl-label{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-right:4px}
   .ctl-row{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;margin:12px 0 0}
   .ctl-row input[type=datetime-local]{font:14px "Barlow",system-ui,sans-serif;color:var(--ink);background:var(--surface);border:1px solid var(--edge);border-radius:8px;padding:4px 8px;min-height:34px}
@@ -129,6 +133,13 @@
   .tiles{position:absolute;inset:0;pointer-events:none;opacity:.72;mix-blend-mode:multiply}
   .blk{fill:none;stroke:var(--map-line);stroke-width:6;stroke-linecap:round;vector-effect:non-scaling-stroke}
   .hit{fill:none;stroke:transparent;stroke-width:16;stroke-linecap:round;cursor:pointer;vector-effect:non-scaling-stroke}
+  body[data-mode="walk"] .blk{stroke:var(--walk-line)}
+  .hinl{fill:none;stroke:var(--walk);stroke-width:5;stroke-linecap:round;stroke-opacity:.85;vector-effect:non-scaling-stroke}
+  .dot{fill:none;stroke-opacity:.8;vector-effect:non-scaling-stroke}
+  .cam{cursor:pointer}
+  /* walking, whole city: neighborhoods shaded by reports of violence and robbery per km of street (--shade, set by the script) */
+  body[data-mode="walk"] .hoods:not(.near) path{fill:var(--people);fill-opacity:var(--shade,0)}
+  body[data-mode="walk"] .hoods:not(.near) path:hover{stroke-width:2.5;stroke-opacity:.95}
   .cands{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0;max-height:132px;overflow-y:auto}
   .cands:empty{display:none}
   /* neighborhoods: outlines to pick while the whole city shows; closer in, only faint dashed edges */
@@ -178,9 +189,15 @@
   .glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 4px}
   .glance>div{background:var(--well);border-radius:8px;padding:8px 10px}
   .glance .k{display:block;font:10.5px "IBM Plex Mono",monospace;letter-spacing:.06em;color:var(--ink-3)}
-  .glance .v{display:block;font:600 20px "IBM Plex Mono",monospace;color:var(--ink-3)}
+  .glance .v{display:block;font:600 20px "IBM Plex Mono",monospace;color:var(--ink)}
   .hours{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;height:36px;align-items:end;margin:4px 0 2px}
   .hours i{display:block;background:var(--walk-soft);border-radius:2px 2px 0 0}
+  .ktab{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:4px}
+  .ktab td{padding:5px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+  .ktab td.n{text-align:right;font:13px "IBM Plex Mono",monospace;padding-left:12px;white-space:nowrap}
+  .ktab tr.zero td{color:var(--ink-3)}
+  .rank{font-size:14.5px;line-height:1.45;margin-top:10px}
+  .sm-note{font-size:13px;line-height:1.45;color:var(--ink-2);margin-top:8px}
   .hours-ax{display:flex;justify-content:space-between;font:10.5px "IBM Plex Mono",monospace;color:var(--ink-3)}
   .tbd{display:inline-block;font:500 10px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--walk);
        border:1px solid currentColor;border-radius:3px;padding:0 5px;margin-left:6px;vertical-align:1px}
@@ -204,7 +221,7 @@
   <div class="intro">
     <h1>SF Streets</h1>
     <p class="lede" data-for="drive">Find a block in San Francisco to see whether you can park there right now or at a time you pick: street cleaning on each side, meters and time limits, permit areas, and every kind of ticket written there.</p>
-    <p class="lede" data-for="walk">Find a street or corner in San Francisco to see how often people walking there have been hit by cars, when it happens, why, and what's been built to make it safer.</p>
+    <p class="lede" data-for="walk">Find a street or corner in San Francisco to see how often people walking there have been hit by cars and why, what gets reported to police at its corners, and how that changes after dark.</p>
   </div>
 
   <div class="modes" role="group" aria-label="How are you getting around?">
@@ -254,17 +271,21 @@
 
       <!-- what the map draws -->
       <div class="chips layers" data-for="drive" data-multi><span class="ctl-label">Show</span>
-        <button class="chip sm" aria-pressed="true">Tickets per block</button>
-        <button class="chip sm" aria-pressed="false">Street cleaning</button>
-        <button class="chip sm" aria-pressed="false">Meters</button>
-        <button class="chip sm" aria-pressed="false">Garages &amp; lots</button>
-        <button class="chip sm" aria-pressed="false">Closures</button>
+        <button class="chip sm" aria-pressed="true" data-layer="cams">Speed &amp; red-light cameras</button>
+        <button class="chip sm" aria-pressed="false" data-layer="cars">Car break-ins</button>
+        <button class="chip sm" disabled title="Comes with the parking data">Tickets per block</button>
+        <button class="chip sm" disabled title="Comes with the parking data">Street cleaning</button>
+        <button class="chip sm" disabled title="Comes with the parking data">Meters</button>
+        <button class="chip sm" disabled title="Comes with the parking data">Garages &amp; lots</button>
+        <button class="chip sm" disabled title="Comes with the parking data">Closures</button>
       </div>
       <div class="chips layers" data-for="walk" data-multi><span class="ctl-label">Show</span>
-        <button class="chip sm" aria-pressed="true">High Injury Network</button>
-        <button class="chip sm" aria-pressed="true">Pedestrian crashes</button>
-        <button class="chip sm" aria-pressed="false">Crosswalks &amp; signals</button>
-        <button class="chip sm" aria-pressed="false">Speed limits</button>
+        <button class="chip sm" aria-pressed="true" data-layer="hin">High Injury Network</button>
+        <button class="chip sm" aria-pressed="true" data-layer="crash">Pedestrians hit</button>
+        <button class="chip sm" aria-pressed="true" data-layer="people">Violence &amp; robbery</button>
+        <button class="chip sm" aria-pressed="true" data-layer="drugs">Drugs &amp; overdoses</button>
+        <button class="chip sm" disabled title="Comes next">Crosswalks &amp; signals</button>
+        <button class="chip sm" disabled title="Comes next">Speed limits</button>
       </div>
 
       <div class="mapwrap" id="mapwrap">
@@ -275,16 +296,6 @@
       </div>
 
       <ul class="legend" id="legend"></ul>
-      <ul class="legend" data-for="drive">
-        <li><span class="sw ramp"></span>tickets per month on the block, fewer → more</li>
-        <li><span class="sw thick" style="background:var(--sign-red)"></span>no parking at the time you picked</li>
-        <li><span class="sw thick" style="background:var(--ok)"></span>free and legal for your stay</li>
-      </ul>
-      <ul class="legend" data-for="walk">
-        <li><span class="sw thick" style="background:var(--walk)"></span>High Injury Network</li>
-        <li><span class="dot" style="background:var(--walk-soft)"></span>pedestrian injured</li>
-        <li><span class="dot ring" style="background:var(--walk)"></span>severely injured or killed</li>
-      </ul>
     </div>
 
     <aside class="panel" id="panel" aria-live="polite">
@@ -293,7 +304,8 @@
       <div class="p-sub" id="pBetween" hidden></div>
       <div class="p-sub" id="pSub">Tap a street on the map, or search above. Below is what the card will hold.</div>
 
-      <!-- driving -->
+      <!-- driving: break-ins and cameras for the picked block; the rest is still placeholders -->
+      <div data-for="drive" id="driveCards"></div>
       <div class="card" data-for="drive">
         <h4>Can I park here?</h4>
         <div class="verdict">
@@ -324,28 +336,17 @@
         <div class="src">vqzx-t7c4 · fuhz-9thv</div>
       </div>
 
-      <!-- walking -->
-      <div class="card" data-for="walk">
-        <h4>At a glance</h4>
-        <div class="glance">
-          <div><span class="k">Ped. injured</span><span class="v">—</span></div>
-          <div><span class="k">Severe / killed</span><span class="v">—</span></div>
-          <div><span class="k">On HI Network</span><span class="v">—</span></div>
+      <!-- walking: filled in for the picked block; the placeholders say what's there before one is picked -->
+      <div data-for="walk" id="walkCards"></div>
+      <div data-for="walk" id="walkPh">
+        <div class="card">
+          <h4>At a glance</h4>
+          <div class="ph">How many people walking were hit by cars on the block and at its two corners in the last two years, how many were badly hurt or killed, and whether it's on Vision Zero's High Injury Network.</div>
         </div>
-        <div class="ph">Pedestrians hit by cars on this street and its corners in the last five years, and whether it's one of Vision Zero's High Injury Network streets.</div>
-        <div class="src">ubvf-ztfx · dau3-4s8f · enwt-3u8m</div>
-      </div>
-      <div class="card" data-for="walk">
-        <h4>When it happens</h4>
-        <div class="hours" id="hours" aria-hidden="true"></div>
-        <div class="hours-ax"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span></div>
-        <div class="ph" style="margin-top:8px">Crashes by hour of day, and the share in daylight vs after dark. (Bars are a placeholder shape.)</div>
-        <div class="src">ubvf-ztfx (collision_time, lighting)</div>
-      </div>
-      <div class="card" data-for="walk">
-        <h4>Why</h4>
-        <div class="ph">The most common causes in the police reports, e.g. a driver failing to yield to a pedestrian in the crosswalk, or unsafe speed.</div>
-        <div class="src">ubvf-ztfx (vz_pcf_description, ped_action)</div>
+        <div class="card">
+          <h4>Reported to police at its corners</h4>
+          <div class="ph">Robberies, assaults, pickpocketing, weapons, drug offenses and overdoses where police gave naloxone, at the block's two corners, and how that compares with the rest of the city.</div>
+        </div>
       </div>
       <div class="card" data-for="walk">
         <h4>What's built here</h4>
@@ -357,11 +358,6 @@
           </ul>
         </div>
         <div class="src">ybh5-27n2 · 4542-gpa3 · g9zy-srvv · vtn2-q8ky · bp3t-bd4t · hkz3-itiu · 3t7b-gebn</div>
-      </div>
-      <div class="card" data-for="walk">
-        <h4>Reported street crime <span class="tbd">Decision</span></h4>
-        <div class="ph">Not decided yet whether to include this; see PLAN.md §6.</div>
-        <div class="src">wg3w-h783</div>
       </div>
     </aside>
   </div>
@@ -387,17 +383,24 @@
       <dt>Blocks</dt><dd>Each line on the map is one stretch of street between two intersections, as San Francisco Public Works maps it, and is named by its hundred block, from the house numbers along it. Every other dataset on this page is joined to these stretches by the city's centerline number (CNN). Freeways and their ramps, private roads, and streets that exist only on paper are left out.</dd>
       <dt>Data</dt><dd>SFMTA parking citations from the last two years, snapped to the nearest block side by their coordinates; the street sweeping schedule, parking regulations, meters and meter policies, all from data.sf.gov.</dd>
       <dt>Can I park here?</dt><dd>Worked out in your browser from the posted rules for each block side, for the time and stay you pick. It can't see temporary signs that aren't in the city's data.</dd>
+      <dt>Cameras</dt><dd>SFMTA's speed cameras (with their posted limit, and the tickets and warnings each issued since it started, up to two years) and red-light cameras (tickets per intersection over the last two years).</dd>
+      <dt>Car break-ins</dt><dd>SFPD reports of theft from a vehicle and of auto parts in the last two years, at the corner SFPD places them.</dd>
       <dt>Limits</dt><dd>A ticket only appears when someone broke the rule, so quiet blocks look less enforced than they are. Always read the posted signs.</dd>
     </dl>
     <dl class="method" data-for="walk">
       <dt>Blocks</dt><dd>Each line on the map is one stretch of street between two intersections, as San Francisco Public Works maps it, and is named by its hundred block, from the house numbers along it. Every other dataset on this page is joined to these stretches by the city's centerline number (CNN). Freeways and their ramps, private roads, and streets that exist only on paper are left out.</dd>
-      <dt>Data</dt><dd>Traffic crashes resulting in injury or death (SFPD and SFDPH, via data.sf.gov) from the last five years where a pedestrian was involved; the 2024 High Injury Network; signals, crosswalks, safety zones, speed limits and traffic calming.</dd>
-      <dt>Limits</dt><dd>Only reported crashes with an injury are counted, and the data runs about two months behind. A street with few crashes may just have few people walking on it; counts aren't adjusted for foot traffic.</dd>
+      <dt>Pedestrians hit</dt><dd>Traffic crashes resulting in injury (SFPD, via data.sf.gov) from the two years up to the latest in the data, where the other party was a pedestrian. A crash at an intersection counts for every block that meets there; one mid-block counts for that block. "Badly hurt" is the report's severe injury; the cause is the report's primary collision factor, in plainer words. The High Injury Network is Vision Zero's 2024 list of the streets where the most severe and fatal crashes happen.</dd>
+      <dt>Police reports</dt><dd>SFPD incident reports from the last two years, grouped into robbery; assault and other violence (assault, homicide, rape, sex offenses); pickpocketing and purse snatching; weapons; drug offenses; and naloxone given for an overdose (SFPD's code 51050, used when an officer gives naloxone). A report counts once per group, and supplements to a report aren't counted again. SFPD publishes each report at a nearby corner rather than the exact place, so the page shows corners, not blocks. The map shades neighborhoods by reports of violence and robbery per km of street, and a block's card compares its two corners with every other block's.</dd>
+      <dt>After dark</dt><dd>Between sunset and sunrise in San Francisco on that date.</dd>
+      <dt>Limits</dt><dd>Only reported crashes with an injury are counted, and the crash data runs about two months behind. A street with few crashes may just have few people walking on it; counts aren't adjusted for foot traffic. Police reports show where reports were taken, which depends on where police patrol and on who calls or files online, as much as on where things happen. Naloxone reports only count overdoses where police gave it, a small share of all overdoses; paramedics' responses aren't published by location.</dd>
     </dl>
     <footer>
       Sources
       <ul>
         <li><a href="https://data.sf.gov/d/3psu-pn9h">Streets – Active and Retired</a>, San Francisco Public Works via DataSF (dataset 3psu-pn9h, public domain): the blocks, their names, house numbers and cross streets</li>
+        <li><a href="https://data.sf.gov/d/ubvf-ztfx">Traffic Crashes Resulting in Injury</a>, SFPD via DataSF (ubvf-ztfx), and the <a href="https://data.sf.gov/d/enwt-3u8m">2024 High Injury Network</a>, SF Department of Public Health (enwt-3u8m)</li>
+        <li><a href="https://data.sf.gov/d/wg3w-h783">Police Department Incident Reports: 2018 to Present</a>, SFPD via DataSF (wg3w-h783)</li>
+        <li><a href="https://data.sf.gov/d/d5uh-bk84">Automated Speed Enforcement Citations</a> (d5uh-bk84) and <a href="https://data.sf.gov/d/uzmr-g2uc">Red Light Camera Citations</a> (uzmr-g2uc), SFMTA via DataSF</li>
         <li><a href="https://data.sf.gov/Geographic-Locations-and-Boundaries/Analysis-Neighborhoods/j2bu-swwd">Analysis Neighborhoods</a>, DataSF (dataset j2bu-swwd, public domain): the neighborhood outlines on the map</li>
         <li>Map © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, loaded from openstreetmap.org</li>
       </ul>
@@ -410,7 +413,7 @@
   </section>
 
   <div class="note end">
-    <p><b>Not a guide to parking illegally, and not a promise of safety.</b> This page shows the city's posted rules, the tickets it has written, and the crashes it has recorded. Past tickets and crashes don't predict the next one.</p>
+    <p><b>Not a guide to parking illegally, and not a promise of safety.</b> This page shows the city's posted rules, the tickets it has written, the crashes it has recorded and the reports its police have taken. Past tickets, crashes and reports don't predict the next one.</p>
     <p><b>What the page loads.</b> The map images come from OpenStreetMap and the block data from this site, one small area at a time, so both can tell roughly which part of the city you're looking at. If you use your location, it only moves the map; the exact spot isn't sent anywhere.</p>
   </div>
 </main>
@@ -431,15 +434,17 @@ const stacked=()=>matchMedia('(max-width:1000px)').matches, still=()=>matchMedia
 const msg=html=>{ $('#findMsg').innerHTML=html; };
 
 // ---------- mode: #drive / #walk in the URL, remembered on this device; a picked block adds its CNN (#walk/8744000) ----------
-let selected=null;
+let selected=null, ready=false;   // ready: the map below is set up, so a mode change can redraw it
 const hashPart=i=>decodeURIComponent(location.hash.slice(1)).split('/')[i]||'';
 const setHash=()=>{ try{ history.replaceState(null,'','#'+document.body.dataset.mode+(selected?'/'+selected.id:'')); }catch(e){} };
+const mode=()=>document.body.dataset.mode;
 function setMode(m, push){
   if(m!=='drive' && m!=='walk') m='drive';
   document.body.dataset.mode=m;
   $$('.mode').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.mode===m)));
   if(push) setHash();
   try{ localStorage.setItem('sf-mode',m); }catch(e){}
+  if(ready){ applyLayers(); shadeHoods(); legend(); }
 }
 $$('.mode').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode,true)));
 let saved=null; try{ saved=localStorage.getItem('sf-mode'); }catch(e){}
@@ -447,13 +452,18 @@ setMode(hashPart(0)||saved||'drive', false);
 addEventListener('hashchange',()=>{ setMode(hashPart(0),false); if(hashPart(1)&&(!selected||String(selected.id)!==hashPart(1))) goBlockId(hashPart(1)); });
 
 // ---------- chip groups: one pressed per group, or any number with data-multi ----------
+// map layers each mode can show (data-layer chips), and the walking side's time of day
+const layers={cams:true, cars:false, hin:true, crash:true, people:true, drugs:true};
+let walkWhen='any';
 $$('.chips').forEach(g=>{
   const multi=g.hasAttribute('data-multi');
   g.addEventListener('click',e=>{
-    const b=e.target.closest('.chip'); if(!b) return;
-    if(multi){ b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed')!=='true')); return; }
+    const b=e.target.closest('.chip'); if(!b||b.disabled) return;
+    if(multi){ const on=b.getAttribute('aria-pressed')!=='true'; b.setAttribute('aria-pressed', String(on));
+      if(b.dataset.layer){ layers[b.dataset.layer]=on; applyLayers(); legend(); } return; }
     g.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed', String(c===b)));
     if(g.dataset.group==='when-drive') $('#whenPick').hidden = b.dataset.v!=='pick';
+    if(g.dataset.group==='when-walk'){ walkWhen=b.dataset.v; redrawWalk(); if(selected) fillCards(selected); }
   });
 });
 
@@ -477,7 +487,11 @@ const svg=S('svg',{role:'img','aria-label':'Map of San Francisco\'s neighborhood
 wrap.insertBefore(svg, wrap.firstChild); wrap.insertBefore(tileBox, svg.nextSibling);   // images over the lines (see .tiles)
 // every layer sits in a group that turns about the view's center by rot (radians, clockwise); 0 is north up
 const gRotT=S('g',{},tileSvg), gTiles=S('g',{},gRotT), gRot=S('g',{},svg);
-const gHood=S('g',{class:'hoods'},gRot), gStreet=S('g',{},gRot), gHalo=S('g',{},gRot), gBlk=S('g',{},gRot), gStreetLine=S('g',{},gRot), gYou=S('g',{},gRot), gHit=S('g',{},gRot);
+// gNear holds what only shows zoomed in: the blocks, the High Injury Network, the picked block, police reports at corners
+// (car break-ins; violence and robbery; drugs and overdoses) and pedestrian crashes
+const gHood=S('g',{class:'hoods'},gRot), gStreet=S('g',{},gRot), gNear=S('g',{},gRot);
+const gBlk=S('g',{},gNear), gHin=S('g',{},gNear), gHalo=S('g',{},gNear), gCars=S('g',{},gNear), gDrugs=S('g',{},gNear), gPeople=S('g',{},gNear), gCrash=S('g',{},gNear);
+const gStreetLine=S('g',{},gRot), gYou=S('g',{},gRot), gHit=S('g',{},gRot), gCam=S('g',{},gRot);
 let vb={x:(LX0+LX1)/2, y:(LY0+LY1)/2, w:LX1-LX0, h:0}, rot=0;
 const north=$('#znorth'), turnNorm=a=>Math.atan2(Math.sin(a),Math.cos(a));
 // a page opened in a background tab can lay the map out at no width; the view is then a thin sliver many times taller
@@ -492,7 +506,7 @@ function setVB(){
   svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`); tileSvg.setAttribute('viewBox',svg.getAttribute('viewBox'));
   [gRot,gRotT].forEach(g=>rot?g.setAttribute('transform',`rotate(${rot*180/Math.PI} ${cx} ${cy})`):g.removeAttribute('transform'));
   north.hidden=!rot; north.querySelector('svg').style.transform=`rotate(${rot}rad)`;
-  drawTiles(); drawYou(); showBlocks();
+  drawTiles(); drawYou(); placeCams(); showBlocks();
 }
 // the part of the map on screen, as a box in map units (bigger than the view while the map is turned)
 function viewBounds(){ const c=Math.abs(Math.cos(rot)), s=Math.abs(Math.sin(rot)), hx=(c*vb.w+s*vb.h)/2, hy=(s*vb.w+c*vb.h)/2, cx=vb.x+vb.w/2, cy=vb.y+vb.h/2;
@@ -564,7 +578,7 @@ north.onclick=()=>{ const from=rot, t0=performance.now(), now=still();
 function showBlocks(){
   const on=vb.w*PX_M<=SHOW_M;
   $('#hint').hidden=on||!HOODS||HOODS.some(h=>h.el.classList.contains('on'));
-  gBlk.style.display=gHit.style.display=gHalo.style.display=on?'':'none'; gStreetLine.style.display=on?'none':'';
+  gNear.style.display=gHit.style.display=on?'':'none'; gStreetLine.style.display=on?'none':'';
   gHood.classList.toggle('near',on); hoodTag(on); legend();
   if(!on||!META||!hasSize()) return;
   cellKeys(...viewBounds()).forEach(k=>loadCell(k));
@@ -574,21 +588,53 @@ function cellKeys(x0, y0, x1, y1){ const C=META.cell, out=[];
   for(let x=Math.floor((x0+O[0])/C);x<=Math.floor((x1+O[0])/C);x++) for(let y=Math.floor((y0+O[1])/C);y<=Math.floor((y1+O[1])/C);y++) out.push(`${x}_${y}`);
   return out; }
 const cellSet=()=>META._cells||(META._cells=new Set(META.cells));
+// a cell: {b: blocks, c: corners with police reports, x: pedestrian crashes}; see analyze_sf.py
+const EMPTY={b:[],c:[],x:[]};
 function loadCell(key){
   if(cells.has(key)) return Promise.resolve(cells.get(key));
-  if(!cellSet().has(key)){ cells.set(key,[]); return Promise.resolve([]); }
-  const p=fetch(`data/cells/${key}.json`).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(recs=>{
+  if(!cellSet().has(key)){ cells.set(key,EMPTY); return Promise.resolve(EMPTY); }
+  const p=fetch(`data/cells/${key}.json`).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(cell=>{
     const [cx,cy]=key.split('_').map(Number), ox=cx*META.cell-O[0], oy=cy*META.cell-O[1];
-    recs.forEach(b=>{ b.ox=ox; b.oy=oy; b.d=b.g.map(ln=>{ let s=''; for(let i=0;i<ln.length;i+=2) s+=(i?'L':'M')+(ln[i]+ox)+','+(ln[i+1]+oy); return s; }).join('');
+    cell.ox=ox; cell.oy=oy;
+    cell.b.forEach(b=>{ b.ox=ox; b.oy=oy; b.d=b.g.map(ln=>{ let s=''; for(let i=0;i<ln.length;i+=2) s+=(i?'L':'M')+(ln[i]+ox)+','+(ln[i+1]+oy); return s; }).join('');
       S('path',{d:b.d,class:'blk'},gBlk);
+      if(b.hin) S('path',{d:b.d,class:'hinl'},gHin);
       const h=S('path',{d:b.d,class:'hit','aria-label':blockName(b)},gHit);
       h.addEventListener('click',()=>{ if(!dragged){ hideTip(); pick(b); } });
-      h.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') showTip(e,`<b>${esc(blockName(b))}</b>${b.x.length?'<br>'+esc(between(b)):''}`); });
+      h.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') showTip(e,`<b>${esc(blockName(b))}</b>${b.x.length?'<br>'+esc(between(b)):''}${b.hin&&mode()==='walk'?'<br>On the High Injury Network':''}`); });
       h.addEventListener('pointerleave',hideTip); });
-    cells.set(key,recs); return recs;
-  }).catch(()=>{ cells.delete(key); msg('Couldn\'t load the blocks for this part of the map. Check the connection and move the map to try again.'); return []; });
+    cell.c.forEach(c=>{ c.x=c.p[0]+ox; c.y=c.p[1]+oy; });
+    // car break-ins don't change with the time of day picked for walking, so they're drawn once
+    dots(gCars,cell.c.map(c=>[c.x,c.y,c.k[12]+c.k[13]]),'var(--cars)','round');
+    drawWalk(cell);
+    cells.set(key,cell); return cell;
+  }).catch(()=>{ cells.delete(key); msg('Couldn\'t load the blocks for this part of the map. Check the connection and move the map to try again.'); return EMPTY; });
   cells.set(key,p); return p;
 }
+const loadedCells=()=>[...cells.values()].filter(c=>c&&c.b&&c!==EMPTY);
+// a count of police reports at a corner for some kinds, at the time of day picked for walking (k: daylight, after dark, per kind)
+const kcount=(c,kinds)=>kinds.reduce((s,k)=>s+(walkWhen!=='dark'?c.k[2*k]:0)+(walkWhen!=='day'?c.k[2*k+1]:0),0);
+// dots that stay the same size on screen at any zoom: a zero-length stroke with a round (or square) cap, one path per size;
+// the size grows with the square root of the count
+function dots(g, list, color, cap){
+  const by={}; list.forEach(([x,y,n])=>{ if(!n) return; const d=Math.round(Math.min(30,5+3.2*Math.sqrt(n))); by[d]=(by[d]||'')+`M${x},${y}h0`; });
+  Object.entries(by).sort((a,b)=>b[0]-a[0]).forEach(([d,path])=>S('path',{d:path,class:'dot',style:`stroke:${color};stroke-width:${d};stroke-linecap:${cap}`},g)); }
+// violence and robbery (discs), drugs and overdoses (squares) and pedestrians hit (small dots, ringed when badly hurt or
+// killed), for the time of day picked
+function drawWalk(cell){
+  dots(gPeople,cell.c.map(c=>[c.x,c.y,kcount(c,META.police.people)]),'var(--people)','round');
+  dots(gDrugs,cell.c.map(c=>[c.x,c.y,kcount(c,META.police.drugs)]),'var(--drugs)','square');
+  let hit='', bad='';
+  cell.x.forEach(([x,y,,sev,dk])=>{ if(walkWhen==='day'&&dk||walkWhen==='dark'&&!dk) return; const p=`M${x+cell.ox},${y+cell.oy}h0`; hit+=p; if(sev>=2) bad+=p; });
+  if(bad) S('path',{d:bad,class:'dot',style:'stroke:var(--map-sel);stroke-width:12;stroke-linecap:round'},gCrash);
+  if(hit) S('path',{d:hit,class:'dot',style:'stroke:var(--walk);stroke-width:7;stroke-linecap:round'},gCrash);
+}
+function redrawWalk(){ gPeople.innerHTML=gDrugs.innerHTML=gCrash.innerHTML=''; loadedCells().forEach(drawWalk); }
+// each layer shows in its own mode, when its chip is on
+function applyLayers(){ const m=mode();
+  const show=(g,on)=>{ g.style.display=on?'':'none'; };
+  show(gCam,m==='drive'&&layers.cams); show(gCars,m==='drive'&&layers.cars);
+  show(gHin,m==='walk'&&layers.hin); show(gCrash,m==='walk'&&layers.crash); show(gPeople,m==='walk'&&layers.people); show(gDrugs,m==='walk'&&layers.drugs); }
 const hund=h=>h?`${h} block`:'1–99 block';
 // blocks without house numbers (park roads, some alleys) go by the street alone
 const blockName=b=>META.names[b.s]+(b.h===undefined?'':', '+hund(b.h));
@@ -607,7 +653,7 @@ function pick(b, toCard=true){
 }
 // go to a block from search or a link: load its cell, center the map on it at about 800 m (fromSearch: show the map)
 async function goBlock(entry, fromSearch){
-  const [cnn,,ci]=entry, recs=await loadCell(META.cells[ci]), b=recs.find(r=>r.id===cnn); if(!b) return;
+  const [cnn,,ci]=entry, b=(await loadCell(META.cells[ci])).b.find(r=>r.id===cnn); if(!b) return;
   const [x,y]=blockCentre(b); jumpTo(x,y,vb.w*PX_M<BOX_M?vb.w:BOX_M/PX_M); pick(b,false); if(fromSearch) showMap();
 }
 async function goBlockId(id){ const s=await getStreets(); for(const list of s) for(const en of list) if(String(en[0])===String(id)) return goBlock(en); }
@@ -617,9 +663,90 @@ function renderCard(b){
   $('#pTitle').textContent=b?blockName(b):'Pick a block';
   const bt=b&&[between(b),b.sd?`${b.sd===1?'odd':'even'}-numbered side only`:''].filter(Boolean).join(' · ');
   $('#pBetween').hidden=!bt; $('#pBetween').textContent=bt||'';
-  $('#pSub').textContent=b?`${b.nh!==undefined?META.hoods[b.nh]+'. ':''}Its rules, tickets and crashes come next; below is what the card will hold.`
-    :'Tap a street on the map, or search above. Below is what the card will hold.';
+  $('#pSub').textContent=b?(b.nh!==undefined?META.hoods[b.nh]:''):'Tap a street on the map, or search above. Below is what the card will hold.';
+  $('#pSub').hidden=b&&b.nh===undefined;
+  fillCards(b);
 }
+const fmtD=s=>new Date(s+'T12:00:00').toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
+const range=w=>`${fmtD(w.start)} to ${fmtD(w.end)}`;
+const whenTxt=()=>walkWhen==='day'?', in daylight':walkWhen==='dark'?', after dark':'';
+const num=n=>n.toLocaleString();
+// "more than 93% of the city's blocks": how the block's corners rank (analyze_sf.py), for any time of day
+const rankTxt=(b,key,what)=>{ const p=b.pr&&b.pr[key]; return p===undefined?`No ${what} at its corners in these two years.`
+  :`Its corners had more ${what} than <b>${p}%</b> of San Francisco's blocks.`; };
+// the cards for the picked block. Its corners and crashes can sit in the next cell over, so the cells around it load first.
+let fillReq=0;
+async function fillCards(b){
+  const wc=$('#walkCards'), dc=$('#driveCards'), req=++fillReq;
+  $('#walkPh').hidden=!!b;
+  if(!b){ wc.innerHTML=dc.innerHTML=''; return; }
+  const xs=[], ys=[]; b.g.forEach(ln=>{ for(let i=0;i<ln.length;i+=2){ xs.push(ln[i]+b.ox); ys.push(ln[i+1]+b.oy); } });
+  const pad=60/PX_M, around=await Promise.all(cellKeys(Math.min(...xs)-pad,Math.min(...ys)-pad,Math.max(...xs)+pad,Math.max(...ys)+pad).map(loadCell));
+  if(req!==fillReq) return;
+  const nd=new Set(b.nd), at=new Set([b.id,...b.nd]);
+  const corners=around.flatMap(c=>c.c).filter(c=>nd.has(c.id));
+  const hit=around.flatMap(c=>c.x).filter(x=>at.has(x[6])&&(walkWhen==='any'||(walkWhen==='dark')===!!x[4]));
+  const P=META.police, C=META.crashes;
+
+  // walking: pedestrians hit, then police reports at its corners
+  const bad=hit.filter(x=>x[3]>=2).length, killed=hit.filter(x=>x[3]===3).length;
+  let h=`<div class="card"><h4>Pedestrians hit here</h4><div class="glance">
+    <div><span class="k">Hit by a car</span><span class="v">${hit.length}</span></div>
+    <div><span class="k">Badly hurt or killed</span><span class="v">${bad}</span></div>
+    <div><span class="k">High Injury Network</span><span class="v">${b.hin?'Yes':'No'}</span></div></div>
+    <div class="sm-note">On the block and at its two corners, ${range(C)}${whenTxt()}.${killed?` ${killed===1?'One person was':killed+' people were'} killed.`:''}
+    ${b.hin?' The street is on Vision Zero\'s High Injury Network, where the city\'s most severe and fatal crashes concentrate.':''}</div>`;
+  if(hit.length){
+    const byH=new Array(24).fill(0); hit.forEach(x=>byH[x[2]]++); const mx=Math.max(...byH);
+    h+=`<div class="hours" aria-hidden="true">${byH.map(n=>`<i style="height:${n?Math.max(8,100*n/mx):2}%${n?'':';opacity:.35'}"></i>`).join('')}</div>
+      <div class="hours-ax"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span></div>`;
+    if(walkWhen==='any'){ const dk=hit.filter(x=>x[4]).length; h+=`<div class="sm-note">${dk} of ${hit.length} after dark.</div>`; }
+    const why={}; hit.forEach(x=>{ why[x[5]]=(why[x[5]]||0)+1; });
+    h+=`<div class="sm-note" style="margin-top:12px">Main cause in the police report:</div><table class="ktab">${Object.entries(why).sort((a,c)=>c[1]-a[1]).slice(0,3)
+      .map(([k,n])=>`<tr><td>${esc(C.causes[k])}</td><td class="n">${n}</td></tr>`).join('')}</table>`;
+  }
+  h+='</div>';
+  const kinds=[0,1,2,3,4,5], tot=k=>corners.reduce((s,c)=>s+kcount(c,[k]),0);
+  h+=`<div class="card"><h4>Reported to police at its corners</h4><table class="ktab">${kinds.map(k=>{ const n=tot(k);
+      return `<tr class="${n?'':'zero'}"><td>${esc(P.kinds[k])}</td><td class="n">${num(n)}</td></tr>`; }).join('')}</table>
+    ${walkWhen==='any'?`<div class="rank">${rankTxt(b,'people','reports of violence and robbery')}</div>
+      <div class="rank">${rankTxt(b,'drugs','reports of drugs and overdoses')}</div>`:''}
+    <div class="sm-note">At the block's two corners, ${range(P)}${whenTxt()}. SFPD publishes each report at the nearest corner, not the exact spot. Counts show where police took reports, which also depends on where they patrol and who calls.</div></div>`;
+  wc.innerHTML=h;
+
+  // driving: car break-ins at its corners, and cameras near it
+  const cars=corners.reduce((s,c)=>s+c.k[12]+c.k[13],0), [bx,by]=blockCentre(b);
+  const near=(META.cams||[]).map(c=>({c,m:Math.hypot(c[1]-O[0]-bx,c[2]-O[1]-by)*PX_M})).filter(o=>o.m<=500).sort((a,c)=>a.m-c.m);
+  dc.innerHTML=`<div class="card"><h4>Car break-ins at its corners</h4><div class="glance" style="grid-template-columns:minmax(0,1fr)">
+      <div><span class="k">Reported, ${range(P)}</span><span class="v">${num(cars)}</span></div></div>
+    <div class="rank">${rankTxt(b,'cars','car break-ins')}</div></div>
+    <div class="card"><h4>Cameras near here</h4>${near.length?`<table class="ktab">${near.map(({c,m})=>`<tr><td>${esc(camName(c))}</td><td class="n">${Math.round(m/10)*10} m</td></tr>`).join('')}</table>`
+      :'<div class="sm-note" style="margin-top:0">No speed or red-light cameras within 500 m.</div>'}</div>`;
+}
+
+/* ============ speed and red-light cameras (META.cams): [kind, x, y, place, direction(s), mph, tickets, warnings, from, to] ============ */
+const camName=c=>c[0]==='speed'?`Speed camera, ${c[5]} mph: ${c[3]}${c[4]?` (${c[4]})`:''}`:`Red-light camera: ${c[3]}`;
+function camText(c){
+  const since=c[0]==='speed'?`${fmtD(c[8])} to ${fmtD(c[9])}`:`${new Date(c[8]+'-15').toLocaleDateString('en-US',{month:'short',year:'numeric'})} to ${new Date(c[9]+'-15').toLocaleDateString('en-US',{month:'short',year:'numeric'})}`;
+  return c[0]==='speed'?`<b>Speed camera</b> on ${esc(c[3])}${c[4]?`, facing ${esc(c[4])} traffic`:''}. Posted limit ${c[5]} mph. ${num(c[6])} tickets and ${num(c[7])} warnings, ${since}.`
+    :`<b>Red-light camera</b> at ${esc(c[3])}${c[4]?`, watching ${esc(c[4])}`:''}. ${num(c[6])} tickets, ${since}.`; }
+const camEls=[];
+function drawCams(){
+  (META.cams||[]).forEach(c=>{
+    const g=S('g',{class:'cam','aria-label':camName(c)},gCam);
+    if(c[0]==='speed'){ S('circle',{r:11,fill:'#fff',stroke:'var(--sign-red)','stroke-width':3},g);
+      const t=S('text',{y:4,'text-anchor':'middle','font-size':11,'font-weight':700,'font-family':'Barlow Condensed, Barlow, sans-serif',fill:'#111'},g); t.textContent=c[5]; }
+    else { S('rect',{x:-6.5,y:-12,width:13,height:24,rx:3.5,fill:'#1f1f1d',stroke:'#fff','stroke-width':1.5},g);
+      [[-6,'#e0322b'],[0,'#55554f'],[6,'#55554f']].forEach(([y,f])=>S('circle',{cy:y,r:2.8,fill:f},g)); }
+    g.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') showTip(e,camText(c)); });
+    g.addEventListener('pointerleave',hideTip);
+    g.addEventListener('click',()=>{ if(!dragged){ hideTip(); msg(camText(c)); } });
+    camEls.push([g,c[1]-O[0],c[2]-O[1]]); });
+  placeCams(); applyLayers();
+}
+// the markers keep their size on screen and stay upright when the map turns
+function placeCams(){ const u=vb.w/(wrap.clientWidth||600), deg=-rot*180/Math.PI;
+  camEls.forEach(([g,x,y])=>g.setAttribute('transform',`translate(${x} ${y}) rotate(${deg}) scale(${u})`)); }
 function drawYou(){ gYou.innerHTML=''; if(!fix) return; const u=vb.w/(wrap.clientWidth||600);
   S('circle',{cx:fix[0],cy:fix[1],r:7*u,fill:'var(--accent)',stroke:'var(--map-bg)','stroke-width':2.5,'vector-effect':'non-scaling-stroke'},gYou); }
 // after a search on a phone, bring the map into view if it's off screen
@@ -636,10 +763,10 @@ fetch('hoods.json').then(r=>{ if(!r.ok) throw new Error(r.status); return r.json
       return p; });
     const el=S('path',{'fill-rule':'evenodd',d:rings.map(p=>{ let s=''; for(let k=0;k<p.length;k+=2) s+=(k?'L':'M')+p[k]+','+p[k+1]; return s+'Z'; }).join('')},gHood);
     el.addEventListener('click',()=>{ if(!dragged){ hideTip(); goHood(i); } });
-    el.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') showTip(e,`<b>${esc(name)}</b>`); });
+    el.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') showTip(e,hoodTip(i)); });
     el.addEventListener('pointerleave',hideTip);
     return {name, rings, box:[x0,y0,x1,y1], el}; });
-  showBlocks();
+  shadeHoods(); showBlocks();
 }).catch(e=>console.warn('no neighborhoods:',e));
 function inHood(h, x, y){ const [x0,y0,x1,y1]=h.box; if(x<x0||x>x1||y<y0||y>y1) return false; let c=false;
   h.rings.forEach(p=>{ for(let i=0,j=p.length-2;i<p.length;j=i,i+=2){ const yi=p[i+1], yj=p[j+1];
@@ -648,6 +775,13 @@ function inHood(h, x, y){ const [x0,y0,x1,y1]=h.box; if(x<x0||x>x1||y<y0||y>y1) 
 function hoodTag(near){ const t=$('#hoodTag'), h=near&&HOODS&&HOODS.find(h=>inHood(h,vb.x+vb.w/2,vb.y+vb.h/2));
   t.hidden=!h; if(h) t.textContent=h.name; }
 function pickHood(i){ if(HOODS) HOODS.forEach((h,k)=>h.el.classList.toggle('on',k===i)); showBlocks(); }
+// walking, whole city: each neighborhood shaded by police reports of violence and robbery per km of street (log scale)
+const hoodStat=i=>META&&META.hood_stats&&META.hood_stats[META.hoods.indexOf(HOODS[i].name)];
+function shadeHoods(){ if(!HOODS) return; const walk=mode()==='walk'&&META;
+  const rate=i=>{ const s=hoodStat(i); return s&&s[0]?s[1]/s[0]:0; }, mx=walk?Math.max(...HOODS.map((h,i)=>rate(i))):1;
+  HOODS.forEach((h,i)=>h.el.style.setProperty('--shade',walk?(.03+.6*Math.log1p(rate(i))/Math.log1p(mx)).toFixed(3):'0')); }
+function hoodTip(i){ const s=mode()==='walk'&&hoodStat(i);
+  return `<b>${esc(HOODS[i].name)}</b>`+(s?`<br>${num(s[1])} police reports of violence or robbery (${(s[1]/Math.max(s[0],.1)).toFixed(1)} per km of street), ${num(s[2])} of drugs or overdoses, ${num(s[3])} pedestrians hit, in two years`:''); }
 // fit the neighborhood, but no wider than the view the blocks show at. A bigger one centers on where its blocks are
 // (the data cell nearest the middle of its cells) rather than the middle of its box, which can be a park or the bay.
 // Returns whether all of it fits.
@@ -718,7 +852,7 @@ let streetReq=0;
 function clearStreet(){ streetReq++; gStreet.innerHTML=''; gStreetLine.innerHTML=''; }
 async function showStreet(list){
   clearStreet(); const req=streetReq, ids=new Set(list.map(en=>en[0]));
-  const recs=(await Promise.all([...new Set(list.map(en=>META.cells[en[2]]))].map(k=>loadCell(k)))).flat().filter(b=>ids.has(b.id));
+  const recs=(await Promise.all([...new Set(list.map(en=>META.cells[en[2]]))].map(k=>loadCell(k)))).flatMap(c=>c.b).filter(b=>ids.has(b.id));
   if(req!==streetReq||!recs.length) return;
   recs.forEach(b=>{ S('path',{d:b.d,class:'blk',style:'stroke:var(--map-halo);stroke-opacity:1;stroke-width:10'},gStreet); S('path',{d:b.d,class:'blk'},gStreetLine); });
   let x0=Infinity, y0=Infinity, x1=-Infinity, y1=-Infinity;
@@ -773,22 +907,35 @@ $('#locBtn').addEventListener('click',()=>{
 
 /* ============ legend: what the map itself shows right now (each mode's layers are listed under it) ============ */
 let legendKey='';
-function legend(){ const near=vb.w*PX_M<=SHOW_M, key=[near,!!selected,!!fix,!!HOODS,!!META].join();
+const SPEED_SW='<svg width="18" height="18" viewBox="-12 -12 24 24" aria-hidden="true"><circle r="10.5" fill="#fff" stroke="var(--sign-red)" stroke-width="3"/><text y="4" text-anchor="middle" font-size="10" font-weight="700" font-family="Barlow Condensed, Barlow, sans-serif" fill="#111">25</text></svg>';
+const RED_SW='<svg width="11" height="20" viewBox="-7.5 -13 15 26" aria-hidden="true"><rect x="-6.5" y="-12" width="13" height="24" rx="3.5" fill="#1f1f1d"/><circle cy="-6" r="2.8" fill="#e0322b"/><circle r="2.8" fill="#55554f"/><circle cy="6" r="2.8" fill="#55554f"/></svg>';
+function legend(){ const near=vb.w*PX_M<=SHOW_M, m=mode(), key=[near,!!selected,!!fix,!!HOODS,!!META,m,Object.values(layers)].join();
   if(key===legendKey) return; legendKey=key; const lg=$('#legend'); lg.innerHTML='';
-  const item=(css,txt)=>{ const li=H('li',{},lg); H('span',{className:'sw'},li).style.cssText=css; li.append(txt); };
+  const item=(css,txt,svg)=>{ const li=H('li',{},lg), sw=H('span',{className:'sw'},li); if(svg){ sw.style.cssText='width:auto;height:auto;border-radius:0'; sw.innerHTML=svg; } else sw.style.cssText=css; li.append(txt); };
   // the map stays light in dark mode, so its swatches sit on a bit of the map's background
-  const edge='color-mix(in oklab,var(--map-sel) 60%,var(--map-bg))';
-  if(near&&META){ item('height:6px;border-radius:3px;background:var(--map-line);box-shadow:0 0 0 3px var(--map-bg)','Tap a blue block to pick it');
-    if(selected) item('height:12px;border-radius:6px;background:var(--map-line);border:2px solid var(--map-sel);box-shadow:0 0 0 2px var(--map-bg)','The block you picked'); }
-  if(HOODS&&near) item(`height:0;border-top:2px dashed ${edge};box-shadow:0 0 0 3px var(--map-bg)`,'Neighborhood edge');
-  else if(HOODS) item(`width:16px;height:12px;border-radius:2px;border:1.5px solid ${edge};background:color-mix(in oklab,var(--map-line) 20%,var(--map-bg))`,'Neighborhood');
+  const edge='color-mix(in oklab,var(--map-sel) 60%,var(--map-bg))', bg='box-shadow:0 0 0 3px var(--map-bg)';
+  const disc=(c,sq)=>`width:12px;height:12px;border-radius:${sq?1:6}px;background:${c};opacity:.8;${bg}`;
+  if(near&&META){ item(`height:6px;border-radius:3px;background:var(--${m==='walk'?'walk-line':'map-line'});${bg}`,'Tap a block to pick it');
+    if(selected) item(`height:12px;border-radius:6px;background:var(--${m==='walk'?'walk-line':'map-line'});border:2px solid var(--map-sel);box-shadow:0 0 0 2px var(--map-bg)`,'The block you picked'); }
+  if(m==='walk'&&META){
+    if(near){ if(layers.hin) item(`height:6px;border-radius:3px;background:var(--walk);${bg}`,'High Injury Network');
+      if(layers.crash){ item(`width:8px;height:8px;border-radius:50%;background:var(--walk);${bg}`,'Pedestrian hit');
+        item(`width:8px;height:8px;border-radius:50%;background:var(--walk);box-shadow:0 0 0 2.5px var(--map-sel),0 0 0 5px var(--map-bg)`,'badly hurt or killed'); }
+      if(layers.people) item(disc('var(--people)'),'Police reports of violence, robbery or weapons at a corner (bigger: more)');
+      if(layers.drugs) item(disc('var(--drugs)',1),'Drug offenses and naloxone given for an overdose'); }
+    else if(HOODS) item(`width:40px;height:10px;border-radius:2px;background:linear-gradient(90deg,color-mix(in oklab,var(--people) 8%,var(--map-bg)),color-mix(in oklab,var(--people) 65%,var(--map-bg)))`,
+      'Neighborhoods by police reports of violence and robbery per km of street, fewer to more'); }
+  if(m==='drive'&&META){ if(layers.cams){ item('','Speed camera (posted limit)',SPEED_SW); item('','Red-light camera',RED_SW); }
+    if(near&&layers.cars) item(disc('var(--cars)'),'Car break-ins reported at a corner (bigger: more)'); }
+  if(HOODS&&near) item(`height:0;border-top:2px dashed ${edge};${bg}`,'Neighborhood edge');
+  else if(HOODS&&!(m==='walk'&&META)) item(`width:16px;height:12px;border-radius:2px;border:1.5px solid ${edge};background:color-mix(in oklab,var(--map-line) 20%,var(--map-bg))`,'Neighborhood');
   if(fix) item('width:12px;height:12px;border-radius:50%;background:var(--accent)','Your location'); }
 
 /* ============ start ============ */
 fitSF();
 fetch('data/index.json').then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(m=>{
   META=m; $('#hint').textContent='Pick a neighborhood to see its blocks';
-  legendKey=''; showBlocks();
+  drawCams(); shadeHoods(); legendKey=''; showBlocks();
   if(hashPart(1)) goBlockId(hashPart(1));
 }).catch(e=>console.warn('no block data:',e));   // without it the map still shows the neighborhoods
 // keep the map's center, shape and tiles right when its box changes size. A map first laid out at no size (in a tab
@@ -798,8 +945,7 @@ new ResizeObserver(()=>{ const w=wrap.clientWidth, h=wrap.clientHeight; if(!w||!
   if(!sized){ sized=true; if(selected){ const [x,y]=blockCentre(selected); jumpTo(x,y,BOX_M/PX_M); } else fitSF(); return; }
   clearTimeout(rt); rt=setTimeout(()=>centerOn(vb.x+vb.w/2,vb.y+vb.h/2,vb.w),150); }).observe(wrap);
 
-// placeholder shape for the hour-of-day bars
-$('#hours').innerHTML=Array.from({length:24},(_,h)=>`<i style="height:${Math.round(20+70*Math.exp(-((h-18)**2)/18)+25*Math.exp(-((h-8)**2)/6))}%"></i>`).join('');
+applyLayers(); ready=true;
 })();
 </script>
 </body>
