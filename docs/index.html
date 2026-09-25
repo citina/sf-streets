@@ -17,7 +17,7 @@
     --sign:#ffffff; --sign-red:#c8102e; --sign-ink:#111111;
     --measure:760px;
     /* the map stays light in dark mode too, as on LA Street Rules */
-    --map-bg:#fcfcfb; --map-line:#7fb2ee; --map-sel:#14140f;
+    --map-bg:#fcfcfb; --map-line:#7fb2ee; --map-sel:#14140f; --map-halo:rgba(20,20,15,.28);
     /* walking: danger reads warm; driving keeps the blue accent */
     --walk:#d4502a; --walk-soft:#f2b8a2; --ok:#1baf7a;
     --drive-1:#cfe0f7; --drive-2:#7fb2ee; --drive-3:#2a78d6; --drive-4:#1c4f91;
@@ -127,6 +127,10 @@
   /* the map images sit on top of the lines and multiply with them, like a highlighter on paper,
      so street names stay readable over a line */
   .tiles{position:absolute;inset:0;pointer-events:none;opacity:.72;mix-blend-mode:multiply}
+  .blk{fill:none;stroke:var(--map-line);stroke-width:6;stroke-linecap:round;vector-effect:non-scaling-stroke}
+  .hit{fill:none;stroke:transparent;stroke-width:16;stroke-linecap:round;cursor:pointer;vector-effect:non-scaling-stroke}
+  .cands{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0;max-height:132px;overflow-y:auto}
+  .cands:empty{display:none}
   /* neighborhoods: outlines to pick while the whole city shows; closer in, only faint dashed edges */
   .hoods path{fill:var(--map-line);fill-opacity:0;stroke:var(--map-sel);stroke-opacity:.5;stroke-width:1.5;stroke-linejoin:round;
               vector-effect:non-scaling-stroke;cursor:pointer}
@@ -224,7 +228,7 @@
           <ul class="sugg" id="sugg" role="listbox" hidden></ul>
         </div>
       </div>
-      <div aria-live="polite"><p class="find-msg" id="findMsg"></p></div>
+      <div aria-live="polite"><p class="find-msg" id="findMsg"></p><div class="cands" id="cands"></div></div>
 
       <!-- when: driving asks when you'll park and for how long; walking asks day or night -->
       <div class="ctl-row" data-for="drive">
@@ -284,9 +288,10 @@
     </div>
 
     <aside class="panel" id="panel" aria-live="polite">
-      <div class="p-eyebrow"><span data-for="drive">Block side</span><span data-for="walk">Street or corner</span> · placeholder</div>
-      <div class="p-title">Pick a block</div>
-      <div class="p-sub">Tap a street on the map, or search above. Below is what the card will hold.</div>
+      <div class="p-eyebrow"><span data-for="drive">Block</span><span data-for="walk">Street</span><span id="pId"></span></div>
+      <div class="p-title" id="pTitle">Pick a block</div>
+      <div class="p-sub" id="pBetween" hidden></div>
+      <div class="p-sub" id="pSub">Tap a street on the map, or search above. Below is what the card will hold.</div>
 
       <!-- driving -->
       <div class="card" data-for="drive">
@@ -379,17 +384,20 @@
     <div class="code"><b>Method</b> How this was measured</div>
     <h2>How this was measured, and what it can't tell you</h2>
     <dl class="method" data-for="drive">
+      <dt>Blocks</dt><dd>Each line on the map is one stretch of street between two intersections, as San Francisco Public Works maps it, and is named by its hundred block, from the house numbers along it. Every other dataset on this page is joined to these stretches by the city's centerline number (CNN). Freeways and their ramps, private roads, and streets that exist only on paper are left out.</dd>
       <dt>Data</dt><dd>SFMTA parking citations from the last two years, snapped to the nearest block side by their coordinates; the street sweeping schedule, parking regulations, meters and meter policies, all from data.sf.gov.</dd>
       <dt>Can I park here?</dt><dd>Worked out in your browser from the posted rules for each block side, for the time and stay you pick. It can't see temporary signs that aren't in the city's data.</dd>
       <dt>Limits</dt><dd>A ticket only appears when someone broke the rule, so quiet blocks look less enforced than they are. Always read the posted signs.</dd>
     </dl>
     <dl class="method" data-for="walk">
+      <dt>Blocks</dt><dd>Each line on the map is one stretch of street between two intersections, as San Francisco Public Works maps it, and is named by its hundred block, from the house numbers along it. Every other dataset on this page is joined to these stretches by the city's centerline number (CNN). Freeways and their ramps, private roads, and streets that exist only on paper are left out.</dd>
       <dt>Data</dt><dd>Traffic crashes resulting in injury or death (SFPD and SFDPH, via data.sf.gov) from the last five years where a pedestrian was involved; the 2024 High Injury Network; signals, crosswalks, safety zones, speed limits and traffic calming.</dd>
       <dt>Limits</dt><dd>Only reported crashes with an injury are counted, and the data runs about two months behind. A street with few crashes may just have few people walking on it; counts aren't adjusted for foot traffic.</dd>
     </dl>
     <footer>
       Sources
       <ul>
+        <li><a href="https://data.sf.gov/d/3psu-pn9h">Streets – Active and Retired</a>, San Francisco Public Works via DataSF (dataset 3psu-pn9h, public domain): the blocks, their names, house numbers and cross streets</li>
         <li><a href="https://data.sf.gov/Geographic-Locations-and-Boundaries/Analysis-Neighborhoods/j2bu-swwd">Analysis Neighborhoods</a>, DataSF (dataset j2bu-swwd, public domain): the neighborhood outlines on the map</li>
         <li>Map © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, loaded from openstreetmap.org</li>
       </ul>
@@ -403,7 +411,7 @@
 
   <div class="note end">
     <p><b>Not a guide to parking illegally, and not a promise of safety.</b> This page shows the city's posted rules, the tickets it has written, and the crashes it has recorded. Past tickets and crashes don't predict the next one.</p>
-    <p><b>What the page loads.</b> The map images come from OpenStreetMap, one small area at a time, so it can tell roughly which part of the city you're looking at. If you use your location, it only moves the map; the exact spot isn't sent anywhere.</p>
+    <p><b>What the page loads.</b> The map images come from OpenStreetMap and the block data from this site, one small area at a time, so both can tell roughly which part of the city you're looking at. If you use your location, it only moves the map; the exact spot isn't sent anywhere.</p>
   </div>
 </main>
 <div id="tip" hidden></div>
@@ -422,18 +430,21 @@ function hideTip(){ tip.hidden=true; }
 const stacked=()=>matchMedia('(max-width:1000px)').matches, still=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const msg=html=>{ $('#findMsg').innerHTML=html; };
 
-// ---------- mode: #drive / #walk in the URL, remembered on this device ----------
+// ---------- mode: #drive / #walk in the URL, remembered on this device; a picked block adds its CNN (#walk/8744000) ----------
+let selected=null;
+const hashPart=i=>decodeURIComponent(location.hash.slice(1)).split('/')[i]||'';
+const setHash=()=>{ try{ history.replaceState(null,'','#'+document.body.dataset.mode+(selected?'/'+selected.id:'')); }catch(e){} };
 function setMode(m, push){
   if(m!=='drive' && m!=='walk') m='drive';
   document.body.dataset.mode=m;
   $$('.mode').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.mode===m)));
-  if(push) history.replaceState(null,'','#'+m);
+  if(push) setHash();
   try{ localStorage.setItem('sf-mode',m); }catch(e){}
 }
 $$('.mode').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode,true)));
 let saved=null; try{ saved=localStorage.getItem('sf-mode'); }catch(e){}
-setMode(location.hash.slice(1)||saved||'drive', false);
-addEventListener('hashchange',()=>setMode(location.hash.slice(1),false));
+setMode(hashPart(0)||saved||'drive', false);
+addEventListener('hashchange',()=>{ setMode(hashPart(0),false); if(hashPart(1)&&(!selected||String(selected.id)!==hashPart(1))) goBlockId(hashPart(1)); });
 
 // ---------- chip groups: one pressed per group, or any number with data-multi ----------
 $$('.chips').forEach(g=>{
@@ -453,21 +464,25 @@ const O=z17(37.76,-122.44).map(Math.round);   // keeps SVG numbers small enough 
 const SF=[-122.515,37.708,-122.357,37.834];    // the city's neighborhoods, Treasure Island included: the map's home view and pan limits
 const toXY=(lat,lon)=>z17(lat,lon).map((v,i)=>v-O[i]);
 const [LX0,LY1]=toXY(SF[1],SF[0]), [LX1,LY0]=toXY(SF[3],SF[2]);
-const BOX_M=800, SHOW_M=3000;                  // a found place shows about 800 m; under 3 km the neighborhoods turn to edges (and the blocks will load)
+const BOX_M=800, SHOW_M=3000;                  // a found block or place shows about 800 m; blocks load once the view is under 3 km
 const TILE_URL=(z,x,y)=>`https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
 
-let HOODS=null, fix=null;
+let META=null, STREETS=null, HOODS=null, fix=null;
+const cells=new Map();   // cell key -> promise while loading, then [block records]
 
 /* ============ the map, as on LA Street Rules ============ */
 const wrap=$('#mapwrap');
 const tileBox=H('div',{className:'tiles'}), tileSvg=S('svg',{'aria-hidden':'true'},tileBox);
-const svg=S('svg',{role:'img','aria-label':'Map of San Francisco and its neighborhoods'});
+const svg=S('svg',{role:'img','aria-label':'Map of San Francisco\'s neighborhoods and blocks'});
 wrap.insertBefore(svg, wrap.firstChild); wrap.insertBefore(tileBox, svg.nextSibling);   // images over the lines (see .tiles)
 // every layer sits in a group that turns about the view's center by rot (radians, clockwise); 0 is north up
 const gRotT=S('g',{},tileSvg), gTiles=S('g',{},gRotT), gRot=S('g',{},svg);
-const gHood=S('g',{class:'hoods'},gRot), gYou=S('g',{},gRot);
+const gHood=S('g',{class:'hoods'},gRot), gStreet=S('g',{},gRot), gHalo=S('g',{},gRot), gBlk=S('g',{},gRot), gStreetLine=S('g',{},gRot), gYou=S('g',{},gRot), gHit=S('g',{},gRot);
 let vb={x:(LX0+LX1)/2, y:(LY0+LY1)/2, w:LX1-LX0, h:0}, rot=0;
 const north=$('#znorth'), turnNorm=a=>Math.atan2(Math.sin(a),Math.cos(a));
+// a page opened in a background tab can lay the map out at no width; the view is then a thin sliver many times taller
+// than the city, so map images wait until the map has a size (the blocks should too, once they load here)
+const hasSize=()=>wrap.clientWidth>0&&wrap.clientHeight>0;
 const minW=()=>150/PX_M, maxW=()=>Math.max(LX1-LX0, (LY1-LY0)*wrap.clientWidth/Math.max(1,wrap.clientHeight));
 function setVB(){
   const asp=wrap.clientHeight/Math.max(1,wrap.clientWidth);
@@ -477,7 +492,7 @@ function setVB(){
   svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`); tileSvg.setAttribute('viewBox',svg.getAttribute('viewBox'));
   [gRot,gRotT].forEach(g=>rot?g.setAttribute('transform',`rotate(${rot*180/Math.PI} ${cx} ${cy})`):g.removeAttribute('transform'));
   north.hidden=!rot; north.querySelector('svg').style.transform=`rotate(${rot}rad)`;
-  drawTiles(); drawYou(); showNear();
+  drawTiles(); drawYou(); showBlocks();
 }
 // the part of the map on screen, as a box in map units (bigger than the view while the map is turned)
 function viewBounds(){ const c=Math.abs(Math.cos(rot)), s=Math.abs(Math.sin(rot)), hx=(c*vb.w+s*vb.h)/2, hy=(s*vb.w+c*vb.h)/2, cx=vb.x+vb.w/2, cy=vb.y+vb.h/2;
@@ -493,8 +508,9 @@ function fitSF(){ pickHood(-1); fitBox(LX0,LY0,LX1,LY1); }
 const tileGroups=new Map();   // zoom -> {g, tiles: Map(key -> image), pending}
 let tz=null;
 function drawTiles(){
+  if(!hasSize()) return;
   // tiles at their own size (256 px), so the map's labels read at their normal size
-  const cw=wrap.clientWidth||600;
+  const cw=wrap.clientWidth;
   const z=Math.max(10,Math.min(19,Math.round(17+Math.log2(cw/vb.w)))), size=256*2**(17-z), pad=vb.w/cw;
   if(!tileGroups.has(z)) tileGroups.set(z,{g:S('g',{},gTiles), tiles:new Map(), pending:0});
   const L=tileGroups.get(z); gTiles.appendChild(L.g);   // the current zoom draws on top while the old one fills the gaps
@@ -543,9 +559,67 @@ north.onclick=()=>{ const from=rot, t0=performance.now(), now=still();
   const step=t=>{ const k=now?1:Math.min(1,(t-t0)/300); rot=k<1?from*(1-k)*(1-k):0; setVB(); if(k<1) requestAnimationFrame(step); };
   requestAnimationFrame(step); };
 
-// closer than SHOW_M, the neighborhoods turn to faint edges and the tag names the one in the middle (the blocks will load here too)
-function showNear(){ const on=vb.w*PX_M<=SHOW_M;
-  $('#hint').hidden=on||!HOODS||HOODS.some(h=>h.el.classList.contains('on')); gHood.classList.toggle('near',on); hoodTag(on); legend(); }
+/* ============ blocks: loaded a cell (about 1 km) at a time, only when zoomed in ============ */
+// closer than SHOW_M the blocks show, the neighborhoods turn to faint edges and the tag names the one in the middle
+function showBlocks(){
+  const on=vb.w*PX_M<=SHOW_M;
+  $('#hint').hidden=on||!HOODS||HOODS.some(h=>h.el.classList.contains('on'));
+  gBlk.style.display=gHit.style.display=gHalo.style.display=on?'':'none'; gStreetLine.style.display=on?'none':'';
+  gHood.classList.toggle('near',on); hoodTag(on); legend();
+  if(!on||!META||!hasSize()) return;
+  cellKeys(...viewBounds()).forEach(k=>loadCell(k));
+}
+// the cells that touch a box in map units
+function cellKeys(x0, y0, x1, y1){ const C=META.cell, out=[];
+  for(let x=Math.floor((x0+O[0])/C);x<=Math.floor((x1+O[0])/C);x++) for(let y=Math.floor((y0+O[1])/C);y<=Math.floor((y1+O[1])/C);y++) out.push(`${x}_${y}`);
+  return out; }
+const cellSet=()=>META._cells||(META._cells=new Set(META.cells));
+function loadCell(key){
+  if(cells.has(key)) return Promise.resolve(cells.get(key));
+  if(!cellSet().has(key)){ cells.set(key,[]); return Promise.resolve([]); }
+  const p=fetch(`data/cells/${key}.json`).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(recs=>{
+    const [cx,cy]=key.split('_').map(Number), ox=cx*META.cell-O[0], oy=cy*META.cell-O[1];
+    recs.forEach(b=>{ b.ox=ox; b.oy=oy; b.d=b.g.map(ln=>{ let s=''; for(let i=0;i<ln.length;i+=2) s+=(i?'L':'M')+(ln[i]+ox)+','+(ln[i+1]+oy); return s; }).join('');
+      S('path',{d:b.d,class:'blk'},gBlk);
+      const h=S('path',{d:b.d,class:'hit','aria-label':blockName(b)},gHit);
+      h.addEventListener('click',()=>{ if(!dragged){ hideTip(); pick(b); } });
+      h.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') showTip(e,`<b>${esc(blockName(b))}</b>${b.x.length?'<br>'+esc(between(b)):''}`); });
+      h.addEventListener('pointerleave',hideTip); });
+    cells.set(key,recs); return recs;
+  }).catch(()=>{ cells.delete(key); msg('Couldn\'t load the blocks for this part of the map. Check the connection and move the map to try again.'); return []; });
+  cells.set(key,p); return p;
+}
+const hund=h=>h?`${h} block`:'1–99 block';
+// blocks without house numbers (park roads, some alleys) go by the street alone
+const blockName=b=>META.names[b.s]+(b.h===undefined?'':', '+hund(b.h));
+function between(b){ const n=b.x.map(i=>META.names[i]); return n.length===2?`Between ${n[0]} and ${n[1]}`:n.length?`Off ${n[0]}`:''; }
+// the block on the card: a wider band with a dark edge on each side, so its street name stays readable in the middle
+function drawHalo(){ gHalo.innerHTML=''; if(!selected) return;
+  S('path',{d:selected.d,class:'blk',style:'stroke:var(--map-sel);stroke-width:16'},gHalo); S('path',{d:selected.d,class:'blk',style:'stroke-width:12'},gHalo); }
+function blockCentre(b){ const xs=[], ys=[]; b.g.forEach(ln=>{ for(let i=0;i<ln.length;i+=2){ xs.push(ln[i]+b.ox); ys.push(ln[i+1]+b.oy); } });
+  return [(Math.min(...xs)+Math.max(...xs))/2,(Math.min(...ys)+Math.max(...ys))/2]; }
+
+// tapping a block on a phone scrolls to its card; a block found by search or a link (toCard false) doesn't
+function pick(b, toCard=true){
+  selected=b; drawHalo(); renderCard(b); legend(); setHash();
+  $('#cands').querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.id===String(b.id)));
+  if(toCard&&stacked()){ const p=$('#panel'); if(p.getBoundingClientRect().top>innerHeight-160) p.scrollIntoView({block:'start',behavior:still()?'auto':'smooth'}); }
+}
+// go to a block from search or a link: load its cell, center the map on it at about 800 m (fromSearch: show the map)
+async function goBlock(entry, fromSearch){
+  const [cnn,,ci]=entry, recs=await loadCell(META.cells[ci]), b=recs.find(r=>r.id===cnn); if(!b) return;
+  const [x,y]=blockCentre(b); jumpTo(x,y,vb.w*PX_M<BOX_M?vb.w:BOX_M/PX_M); pick(b,false); if(fromSearch) showMap();
+}
+async function goBlockId(id){ const s=await getStreets(); for(const list of s) for(const en of list) if(String(en[0])===String(id)) return goBlock(en); }
+// the header of the card; the cards under it are still placeholders
+function renderCard(b){
+  $('#pId').textContent=b?` · CNN ${b.id}`:'';
+  $('#pTitle').textContent=b?blockName(b):'Pick a block';
+  const bt=b&&[between(b),b.sd?`${b.sd===1?'odd':'even'}-numbered side only`:''].filter(Boolean).join(' · ');
+  $('#pBetween').hidden=!bt; $('#pBetween').textContent=bt||'';
+  $('#pSub').textContent=b?`${b.nh!==undefined?META.hoods[b.nh]+'. ':''}Its rules, tickets and crashes come next; below is what the card will hold.`
+    :'Tap a street on the map, or search above. Below is what the card will hold.';
+}
 function drawYou(){ gYou.innerHTML=''; if(!fix) return; const u=vb.w/(wrap.clientWidth||600);
   S('circle',{cx:fix[0],cy:fix[1],r:7*u,fill:'var(--accent)',stroke:'var(--map-bg)','stroke-width':2.5,'vector-effect':'non-scaling-stroke'},gYou); }
 // after a search on a phone, bring the map into view if it's off screen
@@ -565,7 +639,7 @@ fetch('hoods.json').then(r=>{ if(!r.ok) throw new Error(r.status); return r.json
     el.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') showTip(e,`<b>${esc(name)}</b>`); });
     el.addEventListener('pointerleave',hideTip);
     return {name, rings, box:[x0,y0,x1,y1], el}; });
-  showNear();
+  showBlocks();
 }).catch(e=>console.warn('no neighborhoods:',e));
 function inHood(h, x, y){ const [x0,y0,x1,y1]=h.box; if(x<x0||x>x1||y<y0||y>y1) return false; let c=false;
   h.rings.forEach(p=>{ for(let i=0,j=p.length-2;i<p.length;j=i,i+=2){ const yi=p[i+1], yj=p[j+1];
@@ -573,81 +647,115 @@ function inHood(h, x, y){ const [x0,y0,x1,y1]=h.box; if(x<x0||x>x1||y<y0||y>y1) 
   return c; }
 function hoodTag(near){ const t=$('#hoodTag'), h=near&&HOODS&&HOODS.find(h=>inHood(h,vb.x+vb.w/2,vb.y+vb.h/2));
   t.hidden=!h; if(h) t.textContent=h.name; }
-function pickHood(i){ if(HOODS) HOODS.forEach((h,k)=>h.el.classList.toggle('on',k===i)); showNear(); }
-// fit the whole neighborhood. (LA Street Rules caps this at SHOW_M so the blocks load, centered on where they are;
-// that comes back with the block data.)
-function goHood(i){ pickHood(i); fitBox(...HOODS[i].box); }
+function pickHood(i){ if(HOODS) HOODS.forEach((h,k)=>h.el.classList.toggle('on',k===i)); showBlocks(); }
+// fit the neighborhood, but no wider than the view the blocks show at. A bigger one centers on where its blocks are
+// (the data cell nearest the middle of its cells) rather than the middle of its box, which can be a park or the bay.
+// Returns whether all of it fits.
+function goHood(i){
+  const h=HOODS[i], [x0,y0,x1,y1]=h.box, asp=wrap.clientWidth/Math.max(1,wrap.clientHeight);
+  let w=Math.max((x1-x0)*1.1,(y1-y0)*1.1*asp,BOX_M/PX_M), cx=(x0+x1)/2, cy=(y0+y1)/2;
+  const fits=!META||w*PX_M<=SHOW_M;
+  if(!fits){ w=SHOW_M/PX_M*.98;
+    const C=META.cell, pts=META.cells.map(k=>k.split('_').map(Number)).map(([a,b])=>[(a+.5)*C-O[0],(b+.5)*C-O[1]]).filter(([x,y])=>inHood(h,x,y));
+    if(pts.length){ const mx=pts.reduce((s,p)=>s+p[0],0)/pts.length, my=pts.reduce((s,p)=>s+p[1],0)/pts.length, dist=p=>Math.hypot(p[0]-mx,p[1]-my);
+      [cx,cy]=pts.reduce((a,p)=>dist(p)<dist(a)?p:a); } }
+  pickHood(i); jumpTo(cx,cy,w);
+  return fits;
+}
 
-/* ============ search: neighborhoods, and for now a few dozen major streets ============ */
-// PLACEHOLDER until the street data (milestone 2): [name, west, south, east, north] for some major streets, from the
-// extent of their segments in Streets – Active and Retired (3psu-pn9h). Picking one only moves the map there.
-const STREETS=[
-["3rd St",-122.4034,37.7162,-122.387,37.7876],["9th Ave",-122.4684,37.7471,-122.4647,37.7868],["16th St",-122.4373,37.7638,-122.3861,37.7671],["19th Ave",-122.4788,37.7138,-122.4693,37.7867],
-["24th St",-122.4428,37.7508,-122.3802,37.7545],["Alemany Blvd",-122.4718,37.7082,-122.407,37.7376],["Brannan St",-122.408,37.7692,-122.388,37.7848],["Broadway",-122.4464,37.7928,-122.3977,37.7992],
-["Bryant St",-122.4109,37.748,-122.3878,37.7871],["Bush St",-122.4464,37.7854,-122.3991,37.7913],["California St",-122.4935,37.7835,-122.3964,37.7937],["Castro St",-122.4368,37.7346,-122.4324,37.7703],
-["Cesar Chavez St",-122.4381,37.7471,-122.3827,37.7506],["Chestnut St",-122.4475,37.7994,-122.4034,37.8052],["Church St",-122.4292,37.7397,-122.4265,37.7704],["Clay St",-122.4593,37.7875,-122.3956,37.7956],
-["Clement St",-122.5063,37.781,-122.459,37.7832],["Columbus Ave",-122.4196,37.7955,-122.4033,37.8068],["Divisadero St",-122.444,37.7673,-122.4365,37.8056],["Eddy St",-122.4411,37.7803,-122.4077,37.7847],
-["Evans Ave",-122.3973,37.7324,-122.3698,37.7497],["Fell St",-122.4541,37.7714,-122.4175,37.7766],["Fillmore St",-122.4375,37.7694,-122.4299,37.8064],["Folsom St",-122.4156,37.7333,-122.39,37.7908],
-["Franklin St",-122.4278,37.774,-122.4207,37.8071],["Fulton St",-122.5111,37.7713,-122.4151,37.7798],["Geary Blvd",-122.5094,37.779,-122.4214,37.7857],["Geneva Ave",-122.4523,37.7083,-122.4201,37.7231],
-["Golden Gate Ave",-122.4585,37.7762,-122.4103,37.7823],["Gough St",-122.4284,37.7718,-122.4203,37.8037],["Grant Ave",-122.4091,37.7867,-122.4046,37.8081],["Great Hwy",-122.5119,37.7252,-122.503,37.7768],
-["Guerrero St",-122.4249,37.745,-122.4222,37.7707],["Haight St",-122.4535,37.7692,-122.4219,37.7732],["Harrison St",-122.4134,37.7443,-122.3885,37.7896],["Hayes St",-122.4543,37.7729,-122.416,37.7778],
-["Howard St",-122.4176,37.7704,-122.3911,37.7924],["Hyde St",-122.421,37.7787,-122.4147,37.8088],["Irving St",-122.5096,37.7621,-122.4577,37.7645],["Jackson St",-122.4595,37.7893,-122.3971,37.7972],
-["John F Kennedy Dr",-122.5109,37.7667,-122.454,37.7726],["Judah St",-122.5094,37.7603,-122.4619,37.7624],["Kearny St",-122.4073,37.7876,-122.4034,37.8074],["King St",-122.4024,37.7699,-122.3881,37.7818],
-["Larkin St",-122.4222,37.7775,-122.4163,37.8064],["Leavenworth St",-122.4191,37.78,-122.4135,37.8078],["Lincoln Way",-122.5103,37.764,-122.4578,37.7663],["Lombard St",-122.4512,37.7974,-122.402,37.8041],
-["Market St",-122.445,37.7501,-122.3947,37.7945],["Masonic Ave",-122.4477,37.7653,-122.4427,37.7863],["McAllister St",-122.4584,37.7752,-122.4117,37.7812],["Mission St",-122.4543,37.7083,-122.3925,37.7938],
-["Monterey Blvd",-122.4713,37.73,-122.4344,37.7333],["Noriega St",-122.5084,37.7528,-122.4636,37.7559],["Oak St",-122.454,37.771,-122.4194,37.7754],["Ocean Ave",-122.4951,37.7229,-122.4354,37.7327],
-["Octavia St",-122.43,37.7717,-122.4234,37.8035],["O'Farrell St",-122.4475,37.7811,-122.4046,37.7868],["Park Presidio Blvd",-122.4727,37.7731,-122.4717,37.7863],["Pine St",-122.4466,37.7863,-122.3974,37.7925],
-["Polk St",-122.4238,37.7765,-122.4175,37.8062],["Portola Dr",-122.4716,37.7347,-122.4433,37.7505],["Post St",-122.446,37.7835,-122.402,37.7891],["Potrero Ave",-122.408,37.7496,-122.4053,37.7692],
-["Powell St",-122.4125,37.7846,-122.4073,37.8086],["Sacramento St",-122.4593,37.7866,-122.3966,37.7946],["San Bruno Ave",-122.4086,37.7122,-122.3995,37.7697],["Silver Ave",-122.4334,37.7285,-122.3965,37.7372],
-["Stanyan St",-122.4552,37.7581,-122.4513,37.7776],["Stockton St",-122.4107,37.7857,-122.4058,37.8081],["Sunset Blvd",-122.4965,37.7296,-122.4935,37.7655],["Sutter St",-122.4462,37.7844,-122.4002,37.7903],
-["Taraval St",-122.5069,37.7417,-122.4637,37.7437],["Telegraph Hill Blvd",-122.4067,37.8018,-122.4054,37.8036],["The Embarcadero",-122.4158,37.7818,-122.3877,37.809],["Townsend St",-122.4044,37.7697,-122.3883,37.7818],
-["Turk St",-122.4421,37.7792,-122.409,37.7834],["Union St",-122.4469,37.7956,-122.4001,37.8017],["Valencia St",-122.4226,37.7454,-122.42,37.7725],["Van Ness Ave",-122.4266,37.7751,-122.4192,37.8082],
-["Washington St",-122.4594,37.7884,-122.3954,37.7967]];
+/* ============ search: a street, a house number and a street, or a neighborhood ============ */
 const q=$('#q'), sugg=$('#sugg');
-let active=-1, options=[];
-const ABBR={avenue:'ave',av:'ave',street:'st',boulevard:'blvd',bl:'blvd',drive:'dr',place:'pl',road:'rd',lane:'ln',court:'ct',terrace:'ter',highway:'hwy',north:'n',south:'s',east:'e',west:'w'};
+let loadingStreets=null, active=-1, options=[];
+const ABBR={avenue:'ave',av:'ave',street:'st',boulevard:'blvd',bl:'blvd',drive:'dr',place:'pl',road:'rd',lane:'ln',court:'ct',terrace:'ter',highway:'hwy',alley:'aly',north:'n',south:'s',east:'e',west:'w'};
 const words=s=>s.toLowerCase().replace(/['’]/g,'').replace(/[.,#()\/&-]/g,' ').split(/\s+/).filter(Boolean).map(w=>ABBR[w]||w);
-const matches=(qw, nw)=>qw.every(w=>nw.some(x=>x.startsWith(w)));
-// a house number is skipped for now: finding one needs the street data
-const queryWords=()=>words(q.value.trim().replace(/^\d+\s*/,''));
+// every word typed starts a word of the name; typed words run together also count ("o farrell" finds O'Farrell)
+const matches=(qw, nw)=>qw.every(w=>nw.some(x=>x.startsWith(w)))||qw.length>1&&nw.some(x=>x.startsWith(qw.join('')));
+// streets.json: for each street name, its blocks as [CNN, hundred (null without house numbers), cell number, from street]
+function getStreets(){ return loadingStreets||(loadingStreets=fetch('data/streets.json').then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+  .then(s=>{ STREETS=s; return s; }).catch(e=>{ loadingStreets=null; throw e; })); }
+function parseQuery(v){ const m=v.trim().match(/^(\d+)\s*(.*)$/); return m?{num:+m[1],text:m[2]}:{num:null,text:v.trim()}; }
+function findNames(text, num){
+  const qw=words(text); if(!qw.length) return [];
+  const out=[];
+  META.names.forEach((nm,i)=>{ if(!STREETS[i].length||/^Unnamed/.test(nm)) return; const nw=words(nm);
+    if(!matches(qw,nw)) return;
+    if(num!==null && !STREETS[i].some(e=>e[1]===Math.floor(num/100)*100)) return;
+    const exact=qw.filter(w=>nw.includes(w)).length;
+    out.push([i, -exact, nw.length, -STREETS[i].length]); });
+  return out.sort((a,b)=>a[1]-b[1]||a[2]-b[2]||a[3]-b[3]).slice(0,8).map(r=>r[0]);
+}
 function renderSugg(){ sugg.innerHTML=''; sugg.hidden=!options.length; q.setAttribute('aria-expanded',!!options.length);
   options.forEach((o,k)=>{ const li=H('li',{id:'opt'+k,role:'option'},sugg); li.append(o.label); H('small',{textContent:o.note},li);
     li.setAttribute('aria-selected',k===active); li.addEventListener('mousedown',e=>{ e.preventDefault(); choose(o); }); });
   if(active>=0) q.setAttribute('aria-activedescendant','opt'+active); else q.removeAttribute('aria-activedescendant'); }
-function suggest(){
-  const qw=queryWords(); options=[];
-  if(qw.length){
-    options=STREETS.map((s,i)=>({i,nw:words(s[0])})).filter(r=>matches(qw,r.nw))
-      .sort((a,b)=>qw.filter(w=>b.nw.includes(w)).length-qw.filter(w=>a.nw.includes(w)).length||a.nw.length-b.nw.length).slice(0,6)
-      .map(r=>({s:r.i,label:STREETS[r.i][0],note:'street'}));
-    // neighborhoods after the streets, or first when the name is exactly what was typed
-    if(HOODS){ let k=0;
-      HOODS.forEach((h,i)=>{ const nw=words(h.name); if(k>=3||!matches(qw,nw)) return; k++;
-        const o={hood:i,label:h.name,note:'neighborhood'};
-        if(nw.join(' ')===qw.join(' ')) options.unshift(o); else options.push(o); }); }
-  }
+async function suggest(){
+  const v=q.value; if(!v.trim()){ options=[]; renderSugg(); return; }
+  if(META) try{ await getStreets(); }catch(e){}
+  if(q.value!==v) return;
+  const {num,text}=parseQuery(v);
+  options=META&&STREETS?findNames(text,num).map(i=>{ const n=STREETS[i].length;
+    return {s:i,num,label:num!==null?`${num} ${META.names[i]}`:META.names[i],note:num!==null?hund(Math.floor(num/100)*100):`${n} block${n>1?'s':''}`}; }):[];
+  // neighborhoods after the streets, or first when the name is exactly what was typed
+  const qw=words(text);
+  if(num===null&&HOODS&&qw.length){ let k=0;
+    HOODS.forEach((h,i)=>{ const nw=words(h.name); if(k>=3||!matches(qw,nw)) return; k++;
+      const o={hood:i,label:h.name,note:'neighborhood'};
+      if(nw.join(' ')===qw.join(' ')) options.unshift(o); else options.push(o); }); }
   active=options.length?0:-1; renderSugg();
 }
-q.addEventListener('input',suggest);
+q.addEventListener('focus',()=>{ if(META) getStreets().catch(()=>{}); });
+q.addEventListener('input',()=>{ if(!q.value.trim()) clearStreet(); suggest(); });
 q.addEventListener('keydown',e=>{
   if(e.key==='ArrowDown'||e.key==='ArrowUp'){ if(!options.length) return; e.preventDefault(); active=(active+(e.key==='ArrowDown'?1:options.length-1))%options.length; renderSugg(); }
   else if(e.key==='Enter'){ e.preventDefault(); if(options[active]) choose(options[active]); else if(q.value.trim()) nothingFound(); }
   else if(e.key==='Escape'){ options=[]; renderSugg(); } });
 q.addEventListener('blur',()=>setTimeout(()=>{ options=[]; renderSugg(); },100));
-function nothingFound(){ msg(`Nothing matches “${esc(q.value.trim())}”. For now the search knows San Francisco's neighborhoods and about 80 major streets; try one, like “Valencia” or “Mission”.`); }
+function nothingFound(){ $('#cands').innerHTML='';
+  msg(!META?'The street data didn\'t load, so for now the search only finds neighborhoods. Try reloading the page.'
+    :`No San Francisco street or neighborhood matches “${esc(q.value.trim())}”. Try just the street name, like “Valencia”, or a house number and the street, like “500 Valencia”.`); }
+// a searched street: outline its blocks (still drawn when zoomed out) and fit the map to them
+let streetReq=0;
+function clearStreet(){ streetReq++; gStreet.innerHTML=''; gStreetLine.innerHTML=''; }
+async function showStreet(list){
+  clearStreet(); const req=streetReq, ids=new Set(list.map(en=>en[0]));
+  const recs=(await Promise.all([...new Set(list.map(en=>META.cells[en[2]]))].map(k=>loadCell(k)))).flat().filter(b=>ids.has(b.id));
+  if(req!==streetReq||!recs.length) return;
+  recs.forEach(b=>{ S('path',{d:b.d,class:'blk',style:'stroke:var(--map-halo);stroke-opacity:1;stroke-width:10'},gStreet); S('path',{d:b.d,class:'blk'},gStreetLine); });
+  let x0=Infinity, y0=Infinity, x1=-Infinity, y1=-Infinity;
+  recs.forEach(b=>b.g.forEach(ln=>{ for(let i=0;i<ln.length;i+=2){ const x=ln[i]+b.ox, y=ln[i+1]+b.oy;
+    x0=Math.min(x0,x); x1=Math.max(x1,x); y0=Math.min(y0,y); y1=Math.max(y1,y); } }));
+  fitBox(x0,y0,x1,y1); showMap();
+}
 function choose(o){
   options=[]; renderSugg(); q.blur(); q.value=o.label;
-  if(o.hood!==undefined){ goHood(o.hood); msg(`<b>${esc(o.label)}</b> is outlined on the map.`); showMap(); return; }
-  const [name,w,s,e,n]=STREETS[o.s], [x0,y1]=toXY(s,w), [x1,y0]=toXY(n,e);
-  pickHood(-1); fitBox(x0,y0,x1,y1);
-  msg(`The map shows where <b>${esc(name)}</b> runs. Its blocks will be drawn once the street data is in.`); showMap();
+  if(o.hood!==undefined){ $('#cands').innerHTML=''; clearStreet(); const all=goHood(o.hood);
+    msg(`<b>${esc(o.label)}</b> is outlined on the map.${META?' Tap one of its blocks.':''}${all?'':' Drag the map to see the rest of it.'}`); showMap(); return; }
+  pickHood(-1);
+  const entries=STREETS[o.s], name=META.names[o.s], box=$('#cands'); box.innerHTML='';
+  // a block's chip is its hundred. Where a hundred repeats (a block split at an alley, or a divided street's two halves)
+  // or there are no house numbers, it adds the cross street it starts at, then the side or the street it ends at if needed.
+  const group={}; entries.forEach(en=>(group[en[1]]=group[en[1]]||[]).push(en));
+  const nm=i=>i==null?'':META.names[i], sd=en=>en[5]||0;
+  const label=en=>{ const g=group[en[1]], h=en[1]===null?'':String(en[1]||'1–99');
+    if(g.length===1&&h) return h;
+    const at=g.filter(e=>e[3]===en[3]).length===1?nm(en[3])
+      :g.filter(e=>e[3]===en[3]&&sd(e)===sd(en)).length===1&&sd(en)?`${nm(en[3])}, ${sd(en)===1?'odd':'even'} side`
+      :[nm(en[3]),nm(en[4])].filter(Boolean).join(' to ');
+    return h?(at?`${h} (${at})`:h):at?`at ${at}`:'block'; };
+  const chips=list=>list.forEach(en=>{ const c=H('button',{className:'chip sm',textContent:label(en)},box); c.dataset.id=String(en[0]); c.onclick=()=>goBlock(en,true); });
+  if(o.num!==null){ const h=Math.floor(o.num/100)*100, hits=entries.filter(en=>en[1]===h);
+    if(hits.length===1){ msg(`<b>${esc(name)}, ${hund(h)}</b>`); clearStreet(); goBlock(hits[0],true); return; }
+    msg(`<b>${esc(name)}</b> has ${hits.length} blocks in the ${hund(h)}. Pick one:`); chips(hits); showStreet(hits); return; }
+  if(entries.length===1){ msg(`<b>${esc(name)}</b> is one block.`); clearStreet(); goBlock(entries[0],true); return; }
+  msg(`<b>${esc(name)}</b> has ${entries.length} blocks. Pick one here or on the map, or search again with a house number:`);
+  chips(entries); showStreet(entries);
 }
 
 /* ============ location: only moves the map ============ */
 $('#locBtn').addEventListener('click',()=>{
   const btn=$('#locBtn');
   if(!navigator.geolocation||!window.isSecureContext){ msg('This browser can\'t share a location with the page. Search for your street instead.'); return; }
-  btn.disabled=true; msg('Finding your location…'); q.value='';
+  btn.disabled=true; msg('Finding your location…'); $('#cands').innerHTML=''; q.value=''; clearStreet();
   navigator.geolocation.getCurrentPosition(pos=>{
     btn.disabled=false; const {latitude:lat, longitude:lon}=pos.coords;
     if(lat<SF[1]||lat>SF[3]||lon<SF[0]||lon>SF[2]){ fix=null; drawYou(); legend();
@@ -656,7 +764,7 @@ $('#locBtn').addEventListener('click',()=>{
     fix=toXY(lat,lon); pickHood(-1); jumpTo(fix[0],fix[1],BOX_M/PX_M);
     // inside the box around the city but in none of its neighborhoods: on the water, or just over the county line
     msg(HOODS&&!HOODS.some(h=>inHood(h,fix[0],fix[1]))?'You\'re just outside San Francisco. This page only covers the city\'s streets; you can still search for one.'
-      :'The map shows the streets around your location.');
+      :META?'The map shows the blocks around your location. Tap yours.':'The map shows the streets around your location.');
   }, err=>{ btn.disabled=false;
     msg(err.code===1?'Location is off for this page. Search for your street instead, or allow location for this site in your browser and try again.'
       :err.code===3?'Finding your location took too long. Try again, or search for your street.':'Couldn\'t get your location. Try again, or search for your street.');
@@ -665,21 +773,29 @@ $('#locBtn').addEventListener('click',()=>{
 
 /* ============ legend: what the map itself shows right now (each mode's layers are listed under it) ============ */
 let legendKey='';
-function legend(){ const near=vb.w*PX_M<=SHOW_M, key=[near,!!fix,!!HOODS].join();
+function legend(){ const near=vb.w*PX_M<=SHOW_M, key=[near,!!selected,!!fix,!!HOODS,!!META].join();
   if(key===legendKey) return; legendKey=key; const lg=$('#legend'); lg.innerHTML='';
   const item=(css,txt)=>{ const li=H('li',{},lg); H('span',{className:'sw'},li).style.cssText=css; li.append(txt); };
   // the map stays light in dark mode, so its swatches sit on a bit of the map's background
   const edge='color-mix(in oklab,var(--map-sel) 60%,var(--map-bg))';
+  if(near&&META){ item('height:6px;border-radius:3px;background:var(--map-line);box-shadow:0 0 0 3px var(--map-bg)','Tap a blue block to pick it');
+    if(selected) item('height:12px;border-radius:6px;background:var(--map-line);border:2px solid var(--map-sel);box-shadow:0 0 0 2px var(--map-bg)','The block you picked'); }
   if(HOODS&&near) item(`height:0;border-top:2px dashed ${edge};box-shadow:0 0 0 3px var(--map-bg)`,'Neighborhood edge');
   else if(HOODS) item(`width:16px;height:12px;border-radius:2px;border:1.5px solid ${edge};background:color-mix(in oklab,var(--map-line) 20%,var(--map-bg))`,'Neighborhood');
   if(fix) item('width:12px;height:12px;border-radius:50%;background:var(--accent)','Your location'); }
 
+/* ============ start ============ */
 fitSF();
+fetch('data/index.json').then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(m=>{
+  META=m; $('#hint').textContent='Pick a neighborhood to see its blocks';
+  legendKey=''; showBlocks();
+  if(hashPart(1)) goBlockId(hashPart(1));
+}).catch(e=>console.warn('no block data:',e));   // without it the map still shows the neighborhoods
 // keep the map's center, shape and tiles right when its box changes size. A map first laid out at no size (in a tab
-// opened in the background) fits the city once it has one.
-let sized=wrap.clientWidth>0&&wrap.clientHeight>0, lastW=wrap.clientWidth, lastH=wrap.clientHeight, rt=0;
+// opened in the background) fits the city once it has one, or the block a link picked.
+let sized=hasSize(), lastW=wrap.clientWidth, lastH=wrap.clientHeight, rt=0;
 new ResizeObserver(()=>{ const w=wrap.clientWidth, h=wrap.clientHeight; if(!w||!h||(w===lastW&&h===lastH)) return; lastW=w; lastH=h;
-  if(!sized){ sized=true; fitSF(); return; }
+  if(!sized){ sized=true; if(selected){ const [x,y]=blockCentre(selected); jumpTo(x,y,BOX_M/PX_M); } else fitSF(); return; }
   clearTimeout(rt); rt=setTimeout(()=>centerOn(vb.x+vb.w/2,vb.y+vb.h/2,vb.w),150); }).observe(wrap);
 
 // placeholder shape for the hour-of-day bars

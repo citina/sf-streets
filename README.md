@@ -12,16 +12,19 @@ All from [DataSF](https://data.sf.gov). A sister project to [LA Street Rules](ht
 data split into small map cells, rebuilt weekly.
 
 **Status:** the map works: OpenStreetMap tiles you can pan, zoom and turn, "Use my location", DataSF's 41 Analysis
-Neighborhoods outlined, and search over neighborhoods plus a placeholder list of major streets. The street data and
-cards come next; the page layout and the driving/walking switch are in `docs/index.html`. See [PLAN.md](PLAN.md) for
-the data sources, page structure and milestones.
+Neighborhoods, and all 15,142 blocks (street segments between intersections) from the city's centerlines. Search finds
+any street, a house number on it, or a neighborhood, and a block can be linked (`#drive/13060000`). The rules, tickets
+and crashes on each block's card come next. See [PLAN.md](PLAN.md) for the data sources, page structure and milestones.
 
 `hoods.py` writes `docs/hoods.json`, the neighborhood outlines. The file is committed, so run it again only if DataSF
-updates the layer.
+updates the layer. The block data in `docs/data/` isn't committed (a weekly workflow will publish it, as in
+ticket-clock); build it with `fetch_sf.py` and `analyze_sf.py`.
 
 ## Preview
 
 ```
+python3 fetch_sf.py      # data.sf.gov -> data/raw/
+python3 analyze_sf.py    # data/raw/ -> docs/data/
 python3 -m http.server 8765 --directory docs
 ```
 

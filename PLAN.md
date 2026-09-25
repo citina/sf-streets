@@ -46,29 +46,29 @@ All from data.sf.gov (Socrata; SODA API at `https://data.sf.gov/resource/<id>.js
 
 | Use | Dataset | ID | Geometry | Updates | Notes |
 |---|---|---|---|---|---|
-| Block lines + CNN key | Streets – Active and Retired | `3psu-pn9h` | line | daily | base geometry for every card |
-| Search | List of Streets and Intersections | `pu5n-qu5c` | — | weekly | names + cross streets |
-| Tickets written | SFMTA Parking Citations & Fines | `ab4h-6ztd` (view of `ekn6-qajs`) | point | daily | ~1.3M/yr; top: street cleaning (≈41%), meter expired, RPP overtime, yellow/red zone. **Has future-dated rows (e.g. 2044)** → drop anything after `data_as_of` |
+| Block lines + CNN key | Streets – Active and Retired | `3psu-pn9h` | line | daily | base geometry for every card. **In use** (`fetch_sf.py`, `analyze_sf.py`): 15,142 blocks |
+| Search | List of Streets and Intersections | `pu5n-qu5c` | — | weekly | names + cross streets; not needed so far, the centerlines carry both |
+| Tickets written | SFMTA Parking Citations & Fines | `ab4h-6ztd` (view of `ekn6-qajs`) | point | daily | ~1.38M in the last 12 months, 98.4% with coordinates; top: street cleaning (≈41%), meter expired, RPP overtime, yellow/red zone. **Has future-dated rows (e.g. 2044)** → drop anything after `data_as_of` |
 | Street cleaning, per side | Street Sweeping Schedule | `yhqp-riqs` | line | as needed | 37.9k block sides; *City Infrastructure* category |
-| Time limits, RPP areas, no-parking | Parking regulations (except non-metered color curb) | `hi6h-neyh` | multiline | weekly | `regulation`, `days`, `hrs_begin/end`, `hrlimit`, `rpparea1..3`, `exceptions` |
-| Meters | Parking Meters | `8vzz-qzz9` | point | weekly | per space; `blockface_id`, `cap_color` |
+| Time limits, RPP areas, no-parking | Parking regulations (except non-metered color curb) | `hi6h-neyh` | multiline | weekly | `regulation`, `days`, `hrs_begin/end`, `hrlimit`, `rpparea1..3`, `exceptions`. ~7.8k rows, mostly time limits. **No CNN column**: join to block sides by geometry |
+| Meters | Parking Meters | `8vzz-qzz9` | point | weekly | per space; `street_seg_ctrln_id` is the CNN, `blockface_id`, `cap_color` |
 | Meter hours & rates | Meter Policies | `qq7v-hds4` | — | daily | per space × day: hours, hourly rate, time limit |
 | Metered blockfaces | Blockfaces with Meters / Metered Street Blocks | `mk27-a5x2` / `27b3-yjjx` | line | weekly | to draw meters as block sides, not dots |
 | How many spaces | On-Street Parking Census | `9ivs-nf5y` | line | 2024 | supply per CNN |
 | Garages & lots | SFMTA Managed Off-street Parking; Off-street parking map | `vqzx-t7c4`; `fuhz-9thv` | point | weekly | capacity, hours, web site |
 | Accessible spaces | Blue Curb Spaces | `g69s-9jxr` | point | weekly | |
 | Temporary no-parking | Temporary Street Closures | `8x25-yybr` | line | daily | events, construction |
-| Tow-away zones | SFMTA Enforced Temporary Tow Zones | `6r5h-j298` | point | daily | **looks stale**: only 7 "active" rows, some with 2040s dates. Verify before relying on it |
+| Tow-away zones | SFMTA Enforced Temporary Tow Zones | `6r5h-j298` | point | daily | 155k rows, most without a status, end dates into the 2040s, and only a couple current in any week. Prefer `sftu-nd43` below |
 | Context | Speed Limits per Street Segment | `3t7b-gebn` | multiline | as needed | shared with walking |
 
 ### Walking
 
 | Use | Dataset | ID | Geometry | Updates | Notes |
 |---|---|---|---|---|---|
-| Pedestrian injury crashes | Traffic Crashes Resulting in Injury | `ubvf-ztfx` | point | monthly | ~3.5k vehicle‑pedestrian crashes since 2021; runs to 2026‑07‑31 (≈2 month lag). Has `lighting`, `ped_action`, `vz_pcf_description`, `collision_severity`, `cnn_intrsctn_fkey`, `cnn_sgmt_fkey`. *Public Safety* category |
+| Pedestrian injury crashes | Traffic Crashes Resulting in Injury | `ubvf-ztfx` | point | monthly | 13.6k vehicle‑pedestrian crashes since 2005 (~3.5k since 2021), every one with an intersection CNN, about half with a segment CNN; runs to 2026‑07‑31 (≈2 month lag). Has `lighting`, `ped_action`, `vz_pcf_description`, `collision_severity`, `cnn_intrsctn_fkey`, `cnn_sgmt_fkey`. *Public Safety* category |
 | Deaths | Traffic Crashes Resulting in Fatality | `dau3-4s8f` | point | monthly | |
 | Victims / parties | …Victims Involved; …Parties Involved | `nwes-mmgh`; `8gtc-pjc6` | — | monthly | victim age, injury level |
-| Where most severe crashes concentrate | 2024 High Injury Network | `enwt-3u8m` | multiline | — | Vision Zero's own list; ~13% of streets, most severe injuries. *Health* category |
+| Where most severe crashes concentrate | 2024 High Injury Network | `enwt-3u8m` | multiline | — | Vision Zero's own list; ~13% of streets, severe and fatal injuries 2020–24. 5,917 segments keyed by `cnn_sgmt_pkey`, the same CNN as our blocks. *Health* category |
 | Protection that's there | Traffic Signals; Continental Crosswalks; Painted Safety Zones; Stop Signs | `ybh5-27n2`; `g9zy-srvv`; `vtn2-q8ky`; `4542-gpa3` | point | varies | per intersection |
 | Calming / speed | Speed Limits; Intersection-Level Traffic Calming; Mid-Block Traffic Calming; Slow Streets | `3t7b-gebn`; `bp3t-bd4t`; `abhw-ffzx`; `hkz3-itiu` | line/point | varies | school zones in speed limits |
 | Kids | Crossing Guard Intersections; Safe Routes schools | `ujya-ewdj`; `bhj2-gxup` | point | 2024 | |
@@ -77,6 +77,45 @@ All from data.sf.gov (Socrata; SODA API at `https://data.sf.gov/resource/<id>.js
 | *(decision needed)* Conditions | 311 Cases (streetlights out, sidewalk defects…) | `vw6y-z8j6` | point | daily | large; filter by category |
 
 The Transportation category alone has **no crash data**; the walking side needs Public Safety and Health datasets too.
+
+### Reviewed 2026-09-25: Citina's list and a pass through the catalog
+
+Checked against the Public Safety, Transportation, City Infrastructure, Health and Geography categories (via
+`data.sf.gov/api/views.json?category=…`; the Socrata catalog API lists only 5 SF datasets). Several links were map or
+chart views; the dataset behind each is named.
+
+**Add**
+
+| For | Dataset | ID | Why |
+|---|---|---|---|
+| drive | Street Signs | `m48z-6ji4` | The MTA's sign inventory with each sign's legend and CNN: 25k street-cleaning, 7k permit (RPP), 2k no-parking-any-time, 3k tow signs. Lets the card quote the posted sign |
+| drive | Parking Signs / Street Space Permits | `sftu-nd43` | Temporary no-parking signs for construction, with dates, hours, side of street and CNN; daily. Photos in `pigs-fac7`. Better source for "temporary" than the tow-zone file |
+| drive + walk | Automated Speed Enforcement Citations | `d5uh-bk84` | 56 speed-camera sites since April 2025; daily warnings and citations, posted speed, average ticketed speed |
+| drive | Red Light Camera Citations | `uzmr-g2uc` | 13 camera intersections, monthly counts (Citina's `icnu-39tp` is a map of `8ar7-det4`, a view of this) |
+| drive | Transit Only Lanes | `tzh6-6j82` | Red lanes and their hours: when you can't park or drive in the curb lane |
+| drive | Temp Street Closure Intersections | `7p5y-sxmu` | Companion to `8x25-yybr` (Citina's `nb2q-m4if` is a map of `v9cz-kk5i`, a filtered view of it) |
+| walk | Street Intersections; Street Nodes | `gmfx-8h6i`; `vd6w-dq8r` | Where each intersection CNN is: the corner unit that pedestrian crashes are keyed to |
+| walk | Curb Ramps | `ch9w-7kih` | Per corner, with condition scores; for wheelchairs and strollers |
+
+**Maybe later**
+
+| For | Dataset | ID | Why not yet |
+|---|---|---|---|
+| walk | Police Department Incident Reports: 2018 to Present | `wg3w-h783` | Citina's `jq29-s5wp` and `pbh9-m8j2` are maps of it. ~99k reports a year, 96% placed at an intersection CNN (snapped to a nearby corner for anonymity; the set of corners changed on 2024-04-24). Top: larceny 19k, drugs 9.7k, assault 7.7k. Waits on §6.2; if (b), robbery and assault only, per corner, opt-in |
+| walk | 311 Cases | `vw6y-z8j6` | Streetlights out, sidewalk defects, blocked sidewalks: conditions after dark. Large; filter by category |
+| walk | Sidewalk Widths (2014) | `4g86-grxu` | Citina's `ygcm-bt3x` is its map. Per CNN and side, but from a 2014 study |
+| walk | Pavement Condition; Street Tree Inventory | `5aye-4rtt`; `tkzw-k3nq` | Comfort layers, low priority |
+
+**Skip**
+
+| Dataset | ID | Why |
+|---|---|---|
+| Meter Operating Schedules | `6cqg-dxku` | Frozen in March 2014; Meter Policies `qq7v-hds4` is the daily one |
+| Map of Parking Regulations | `qbyz-te2i` | A map of `hi6h-neyh`, already planned |
+| SFPD Narcan/Naloxone Deployment | `q6vq-c5yf` | A chart of incident reports with code 51050: a measure of overdose response, not of the street, and would mark places |
+| Law Enforcement Dispatched Calls: Real-Time; …Closed | `gnap-fj3t`; `2zdj-bwza` | Unverified calls; the real-time file is a rolling ~2.5-month window. Not a weekly-page measure |
+| Blockfaces | `pep9-66vw` | Curb lines from 2020, only 1.9k of 18k rows carry a CNN; offset the centerlines instead |
+| Fire, DA, jail, use of force, stops, hazard zones | various | Not about the street |
 
 ---
 
@@ -159,10 +198,8 @@ data.sf.gov.
 
 - [x] **0. Setup** — folder, git repo, this plan, page skeleton with the mode switch.
 - [x] **1. Map** — port the SVG + OSM tile map from LA Street Rules; SF bounds; neighborhoods (`hoods.py` →
-  `docs/hoods.json`); search over neighborhoods and, until milestone 2, a placeholder list of ~80 major streets.
-- [ ] **2. Driving data** — fetch + analyze centerlines, sweeping, regulations, meters + policies, citations (2 yrs), garages; block card cards 2–4 and 6.
-  Replace the placeholder street list with `streets.json`; cap a picked neighborhood's zoom at the block-showing width,
-  centered on its blocks, as LA does.
+  `docs/hoods.json`); search over neighborhoods and, until milestone 2, a placeholder list of ~80 major streets (now replaced by every street).
+- [ ] **2. Driving data** — fetch + analyze centerlines *(done: blocks on the map, search, block links)*, sweeping, regulations, meters + policies, citations (2 yrs), garages; block card cards 2–4 and 6.
 - [ ] **3. Can I park here?** — time control + rules evaluator; map recolors by chosen time.
 - [ ] **4. Walking data** — crashes (5 yrs), HIN, protections, speed limits; segment/intersection card; daylight/dark.
 - [ ] **5. Temporary** — closures and tow zones at the chosen time.
