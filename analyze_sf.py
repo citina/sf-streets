@@ -14,14 +14,18 @@ The map is split into cells of about 1 km (as on LA Street Rules), so the page o
                               x: cross streets, sd: 1 or 2 when it carries only the odd or even house numbers,
                               nh: neighborhood, nd: its two corners' CNNs, hin: 1 on the High Injury Network,
                               pr: {kind: percentile}, how its corners' police reports rank among all blocks}
-                      corner {id: node CNN, p: [x, y], k: police reports per kind, daylight and after dark in turn}
+                      corner {id: node CNN, p: [x, y], k: police reports per kind, daylight and after dark in turn,
+                              q: calls to police per group (CALL_GROUPS in fetch_sf.py), the same way; only with calls}
                       crash  [x, y, hour, severity, after dark, cause, where (the block's or the corner's CNN)]
   index.json          loads with the page: names, neighborhoods (with their km of street, police reports about people
                       and about drugs, and pedestrians hit), which cells exist, the time windows, the kinds of police
-                      report and crash causes (by number), and the speed and red-light cameras
+                      report and crash causes (by number), the speed and red-light cameras, and the walking summary
+                      (the city as a whole: when and how people walking were hit, around the places visitors go, the
+                      corners with the most, and totals per year)
   streets.json        loads on the first search: for each street name, its blocks as
                       [CNN, hundred, cell, from street, to street, odd/even side]
 """
+import bisect
 import collections
 import json
 import math
@@ -30,6 +34,8 @@ import shutil
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
+
+from fetch_sf import CALL_GROUPS
 
 ROOT = Path(__file__).resolve().parent
 RAW = ROOT / "data" / "raw"
@@ -74,6 +80,28 @@ CAUSE = {"Driver or bicyclist to yield right-of-way at crosswalks": "Driver didn
          "Failure to stop at STOP sign": "Driver didn't stop at a stop sign",
          "Unknown": "Not recorded", "": "Not recorded"}
 DIRS = {"NB": "northbound", "SB": "southbound", "EB": "eastbound", "WB": "westbound"}
+# what the person walking was doing, from the crash report
+ACTION = {"Crossing in Crosswalk at Intersection": "Crossing in a crosswalk at an intersection",
+          "Crossing in Crosswalk Not at Intersection": "Crossing in a mid-block crosswalk",
+          "Crossing Not in Crosswalk": "Crossing outside a crosswalk",
+          "In Road, Including Shoulder": "In the road, not crossing",
+          "Not in Road": "Not in the road",
+          "Approaching/Leaving School Bus": "Getting on or off a school bus"}
+
+# the walking summary: places people walk to, visitors especially, and what happened within PLACE_M of each
+PLACE_M = 250
+PLACES = [("Union Square", 37.78795, -122.40750), ("Powell St cable car turnaround", 37.78480, -122.40780),
+          ("Chinatown (Portsmouth Square)", 37.79480, -122.40530), ("North Beach (Washington Square)", 37.80070, -122.41010),
+          ("Coit Tower", 37.80240, -122.40580), ("Fisherman's Wharf", 37.80800, -122.41620), ("Pier 39", 37.80870, -122.40980),
+          ("Ghirardelli Square", 37.80580, -122.42290), ("Lombard St's crooked block", 37.80210, -122.41880),
+          ("Ferry Building", 37.79550, -122.39370), ("Salesforce Transit Center", 37.78950, -122.39640),
+          ("Moscone Center", 37.78430, -122.40120), ("Oracle Park", 37.77860, -122.38930), ("Chase Center", 37.76800, -122.38770),
+          ("City Hall", 37.77930, -122.41920), ("Alamo Square", 37.77630, -122.43460), ("Japantown", 37.78510, -122.42980),
+          ("Haight and Ashbury", 37.77000, -122.44690), ("Castro and Market", 37.76250, -122.43510),
+          ("Dolores Park", 37.75960, -122.42690), ("16th St Mission station", 37.76500, -122.41960),
+          ("24th St Mission station", 37.75220, -122.41840), ("Palace of Fine Arts", 37.80290, -122.44840),
+          ("de Young Museum", 37.77150, -122.46870)]
+TREND_FROM = 2015   # the first year of pedestrians hit in the per-year chart (police reports start in 2018)
 
 
 def z17(lon, lat):
@@ -230,7 +258,8 @@ police = load("police")
 p_end = max(when(r["incident_datetime"]) for r in police)
 p_start = p_end - WINDOW
 counts = collections.defaultdict(lambda: [0] * (2 * len(KINDS)))
-seen, off_map = set(), 0
+pol_hour = [[0, 0] for _ in range(24)]   # reports about people, and about drugs, by hour of the day (each report once)
+seen, seen_g, off_map = set(), set(), 0
 for r in police:
     t, n = when(r["incident_datetime"]), node(r.get("cnn"))
     if t <= p_start:
@@ -256,15 +285,40 @@ for r in police:
         if (r["incident_number"], k) not in seen:
             seen.add((r["incident_number"], k))
             counts[n][2 * k + dark(t)] += 1
-for n, k in counts.items():
+    for g, ks in enumerate((PERSON, DRUGS)):
+        if kinds & set(ks) and (r["incident_number"], g) not in seen_g:
+            seen_g.add((r["incident_number"], g))
+            pol_hour[t.hour][g] += 1
+# ---------- calls to police from the public, per corner and group, daylight and after dark ----------
+calls = load("calls")
+q_end = max(when(r["received_datetime"]) for r in calls)
+q_start = q_end - WINDOW
+group_of = {c: g for g, (_, cs) in enumerate(CALL_GROUPS) for c in cs}
+calls_at = collections.defaultdict(lambda: [0] * (2 * len(CALL_GROUPS)))
+n_calls, calls_off = 0, 0
+for r in calls:
+    t, n = when(r["received_datetime"]), node(r.get("intersection_id"))
+    if t <= q_start:
+        continue
+    if n not in corner_at:   # sensitive calls come without a place
+        calls_off += 1
+        continue
+    calls_at[n][2 * group_of[r["call_type_final"]] + dark(t)] += 1
+    n_calls += 1
+
+for n in set(counts) | set(calls_at):
     x, y = corner_at[n]
     cx, cy = cell_of(x, y)
-    cells[(cx, cy)]["c"].append(dict(id=n, p=[round(x - cx * CELL), round(y - cy * CELL)], k=k))
+    c = dict(id=n, p=[round(x - cx * CELL), round(y - cy * CELL)], k=counts[n] if n in counts else [0] * (2 * len(KINDS)))
+    if n in calls_at:
+        c["q"] = calls_at[n]
+    cells[(cx, cy)]["c"].append(c)
 
 # how each block's corners rank among all blocks: people, drugs and overdoses, car break-ins (any time of day)
 total = lambda n, ks: sum(counts[n][2 * k] + counts[n][2 * k + 1] for k in ks) if n in counts else 0
-for key, ks in (("people", PERSON), ("drugs", DRUGS), ("cars", [6])):
-    vals = {b["id"]: sum(total(n, ks) for n in b["nd"]) for b in blocks}
+calls_total = lambda n: sum(calls_at[n]) if n in calls_at else 0
+for key, ks in (("people", PERSON), ("drugs", DRUGS), ("cars", [6]), ("calls", None)):
+    vals = {b["id"]: sum(total(n, ks) if ks else calls_total(n) for n in b["nd"]) for b in blocks}
     ranks = pct_ranks(vals.values())
     for b in blocks:
         if vals[b["id"]]:
@@ -276,6 +330,7 @@ c_end = max(when(r["collision_datetime"]) for r in crashes)
 c_start = c_end - WINDOW
 causes, cause_ix = [], {}
 n_crash = collections.Counter()
+hits = []   # every pedestrian crash in the window: (x, y, time, severity, after dark, cause, where, what the person was doing)
 for r in crashes:
     t = when(r["collision_datetime"])
     if t <= c_start or not r.get("tb_latitude"):
@@ -292,6 +347,7 @@ for r in crashes:
     sev = SEVERITY.get(r.get("collision_severity"), 0)
     cells[(cx, cy)]["x"].append([round(x - cx * CELL), round(y - cy * CELL), t.hour, sev, int(dark(t)), cause_ix[cause], at])
     n_crash[sev] += 1
+    hits.append((x, y, t, sev, int(dark(t)), cause_ix[cause], at, ACTION.get(r.get("ped_action"), "Not recorded")))
 
 # ---------- per neighborhood, for the city-wide view: km of street, police reports (people, drugs), pedestrians hit ----------
 hood_of = {}   # a corner's neighborhood: that of the first block that ends there
@@ -314,6 +370,78 @@ for cell in cells.values():
         if hood_of.get(c[6]) is not None:
             per_hood[hood_of[c[6]]][3] += 1
 per_hood = [[round(km, 1), p, d, x] for km, p, d, x in per_hood]
+
+# ---------- the walking summary: the city as a whole ----------
+# the streets that meet at each corner; an intersection is where two or more differently named streets meet
+at_node = collections.defaultdict(dict)   # node -> {street name: a block of that street ending there}
+for b in blocks:
+    for n in b["nd"]:
+        at_node[n].setdefault(names[b["s"]], b["id"])
+crossings = [n for n in corner_at if len(at_node[n]) >= 2]
+# what's within PLACE_M of a point: pedestrians hit, of them badly hurt or killed, police reports about people, about drugs
+R = PLACE_M / PX_M
+grid = collections.defaultdict(list)
+for x, y, t, sev, *_ in hits:
+    grid[(int(x // R), int(y // R))].append((x, y, 1, int(sev >= 2), 0, 0))
+for n in counts:
+    x, y = corner_at[n]
+    grid[(int(x // R), int(y // R))].append((x, y, 0, 0, total(n, PERSON), total(n, DRUGS)))
+
+
+def around(x, y):
+    s = [0, 0, 0, 0]
+    for i in range(int(x // R) - 1, int(x // R) + 2):
+        for j in range(int(y // R) - 1, int(y // R) + 2):
+            for px, py, *v in grid.get((i, j), ()):
+                if (px - x) ** 2 + (py - y) ** 2 <= R * R:
+                    s = [a + b for a, b in zip(s, v)]
+    return s
+
+
+# each place is compared with the same circle around every intersection: the share of intersections with fewer
+circles = [around(*corner_at[n]) for n in crossings]
+ranked = [sorted(c[k] for c in circles) for k in range(4)]
+rank = lambda k, v: 100 * bisect.bisect_left(ranked[k], v) // len(circles)
+places = []
+for name, lat, lon in PLACES:
+    x, y = z17(lon, lat)
+    s = around(x, y)
+    places.append([name, round(x), round(y), *s, rank(0, s[0]), rank(2, s[2]), rank(3, s[3])])
+
+# the corners where the most people walking were hit: the top five, and any tied with the fifth (at most ten)
+by_corner = collections.defaultdict(lambda: [0, 0])
+for x, y, t, sev, dk, c, at, act in hits:
+    if at in corner_at and len(at_node[at]) >= 2:
+        by_corner[at][0] += 1
+        by_corner[at][1] += sev >= 2
+top = sorted(by_corner.items(), key=lambda kv: (-kv[1][0], -kv[1][1]))
+cut = top[4][1][0] if len(top) >= 5 else 0
+top_corners = []
+for n, (hit, bad) in top[:10]:
+    if hit < cut:
+        break
+    streets = sorted(at_node[n])[:3]
+    x, y = corner_at[n]
+    top_corners.append([" & ".join(streets), n, at_node[n][streets[0]], round(x), round(y), hit, bad])
+
+# pedestrians hit by month of the year and hour of the day, in daylight and after dark; how badly hurt; what they were
+# doing; the causes
+mh = [[[0, 0] for _ in range(24)] for _ in range(12)]
+sev_dark = [[0, 0] for _ in range(4)]
+for x, y, t, sev, dk, c, at, act in hits:
+    mh[t.month - 1][t.hour][dk] += 1
+    sev_dark[sev][dk] += 1
+actions = collections.Counter(h[7] for h in hits).most_common()
+top_causes = [[c, n] for c, n in collections.Counter(h[5] for h in hits).most_common(6)]
+
+# totals per year across the city (from fetch_sf.py's trends): full years only
+trends = load("trends")
+per_year = lambda rows, end, first, keys: [[int(r["y"]), *(int(float(r.get(k) or 0)) for k in keys)] for r in rows
+                                           if r.get("y") and first <= int(r["y"]) < (end + timedelta(days=1)).year]
+summary = dict(place_m=PLACE_M, intersections=len(crossings), places=places, corners=top_corners, mh=mh, sev=sev_dark,
+               actions=actions, causes=top_causes, pol_hour=pol_hour,
+               years=dict(hit=per_year(trends["hit"], c_end, TREND_FROM, ("n", "killed")),
+                          people=per_year(trends["people"], p_end, 0, ("n",)), drugs=per_year(trends["drugs"], p_end, 0, ("n",))))
 
 # ---------- speed and red-light cameras ----------
 cams = []
@@ -371,9 +499,10 @@ day = lambda t: str(t.date())
 meta = dict(built=str(date.today()), streets_as_of=max(r.get("data_as_of", "") for r in segs)[:10], cell=CELL,
             blocks=len(index), names=names, hoods=hoods, hood_stats=per_hood, cells=cell_keys,
             police=dict(start=day(p_start + timedelta(days=1)), end=day(p_end), kinds=KINDS, people=PERSON, drugs=DRUGS),
+            calls=dict(start=day(q_start + timedelta(days=1)), end=day(q_end), groups=[g for g, _ in CALL_GROUPS]),
             crashes=dict(start=day(c_start + timedelta(days=1)), end=day(c_end), causes=causes,
                          severity=["complaint of pain", "visible injury", "severe injury", "killed"]),
-            cams=sorted(cams, key=lambda c: (c[0], c[3])))
+            cams=sorted(cams, key=lambda c: (c[0], c[3])), summary=summary)
 (OUT / "index.json").write_text(json.dumps(meta, separators=(",", ":")))
 (OUT / "streets.json").write_text(json.dumps(streets, separators=(",", ":")))
 sizes.sort()
@@ -381,8 +510,12 @@ print(f"{len(index):,} blocks on {len(set(s for s, *_ in index)):,} streets, {le
 print(f"police {day(p_start)}..{day(p_end)}: {len(seen):,} reports of the kinds shown at {len(counts):,} corners"
       f" ({off_map:,} rows with no corner on the map); per kind:",
       {KINDS[k]: sum(v[2 * k] + v[2 * k + 1] for v in counts.values()) for k in range(len(KINDS))})
+print(f"calls to police {day(q_start)}..{day(q_end)}: {n_calls:,} at {len(calls_at):,} corners ({calls_off:,} without a place); per group:",
+      {g: sum(v[2 * i] + v[2 * i + 1] for v in calls_at.values()) for i, (g, _) in enumerate(CALL_GROUPS)})
 print(f"pedestrian crashes {day(c_start)}..{day(c_end)}: {sum(n_crash.values()):,}, by severity {dict(sorted(n_crash.items()))}")
 print(f"cameras: {sum(c[0] == 'speed' for c in cams)} speed, {sum(c[0] == 'red' for c in cams)} red light")
+print(f"summary: {len(places)} places, {len(top_corners)} top corners (from {cut} hit), {len(crossings):,} intersections;"
+      f" {len(json.dumps(summary, separators=(',', ':'))) / 1024:.1f} KB")
 print(f"{len(cells)} cells, {sum(sizes) / 2**20:.1f} MB; median {sizes[len(sizes) // 2] / 1024:.0f} KB, "
       f"largest {sizes[-1] / 1024:.0f} KB; index.json {(OUT / 'index.json').stat().st_size / 1024:.0f} KB, "
       f"streets.json {(OUT / 'streets.json').stat().st_size / 1024:.0f} KB")

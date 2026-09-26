@@ -16,7 +16,8 @@ data split into small map cells (to be rebuilt weekly, as there).
 **Status:** the map works, with DataSF's 41 Analysis Neighborhoods and all 15,142 blocks. Search finds any street, a
 house number on it, or a neighborhood, and a block can be linked (`#walk/13060000`). The walking side shows the last two
 years of pedestrian crashes, the High Injury Network, and police reports at corners (violence and robbery, drugs and
-naloxone given for overdoses), by daylight or after dark, with neighborhoods shaded citywide. The driving side shows speed
+naloxone given for overdoses) and calls to police from the public, by daylight or after dark, with neighborhoods shaded citywide, and a summary of the whole
+city: when and where people walking were hit, around the places visitors go, and totals per year. The driving side shows speed
 and red-light cameras and car break-ins; its parking rules and tickets come next. See [PLAN.md](PLAN.md).
 
 `hoods.py` writes `docs/hoods.json`, the neighborhood outlines. The file is committed, so run it again only if DataSF

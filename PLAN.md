@@ -65,7 +65,8 @@ time control    drive: When [Now | pick day+time]  For [1h 2h 4h overnight]
 └───────────────────────────────────────┘ └──────────────────────┘
 legend (per mode)
 explainer section  drive: SF street cleaning & RPP in one example
-                   walk: the High Injury Network in one example
+                   walk: summary of the city as a whole (built): when, where (around 24 places visitors go,
+                   neighborhoods, corners), how, and totals per year
 method             data + limits, per mode
 about · disclaimer
 ```
@@ -97,13 +98,15 @@ SFMTA:
   6am 9am noon 3pm 6pm 9pm 12am" (every 6 hours under 340px, like the walking card's hour chart), and "Each dot is about
   N tickets, stacked by the half hour" under it.
 
-**Walking card** (built, except 3)
+**Walking card** (built, except 4)
 
 1. **Pedestrians hit here** — on the block and at its two corners, two years: how many, how many badly hurt or killed,
    on the High Injury Network or not; what time of day they were hit, how many after dark, and the top causes.
 2. **Reported to police at its corners** — robbery, violence, pickpocketing, weapons, drugs, naloxone; how the block's
    corners rank citywide.
-3. **What's built here** — signal, continental crosswalk, painted safety zone, stop signs, speed limit, school zone, slow
+3. **Calls to police at its corners** — calls from the public about fights and assaults, a gun or knife, robbery, threats
+   and harassment; how the block's corners rank citywide.
+4. **What's built here** — signal, continental crosswalk, painted safety zone, stop signs, speed limit, school zone, slow
    street, traffic calming.
 
 **Map layers**
@@ -111,7 +114,7 @@ SFMTA:
 - Drive: speed and red-light cameras (built, default) · car break-ins (built) · blocks shaded by tickets per month ·
   street cleaning at the chosen time · meters · garages · closures.
 - Walk: High Injury Network (thick lines) · pedestrians hit (dots, severe ringed) · violence and robbery (discs) · drugs
-  and overdoses (squares), all built and on by default, with neighborhoods shaded by violence and robbery per km of street
+  and overdoses (squares) · calls to police (blue rings), all built and on by default, with neighborhoods shaded by violence and robbery per km of street
   while the whole city shows · crosswalks & signals · speed limits.
 
 **Wording rules** (Citina, with the ticket-clock restyle)
@@ -157,7 +160,7 @@ data.sf.gov.
   `docs/hoods.json`); search over neighborhoods and, until milestone 2, a placeholder list of ~80 major streets (now replaced by every street).
 - [ ] **2. Driving data** — fetch + analyze centerlines *(done: blocks on the map, search, block links)*, sweeping, regulations, meters + policies, citations (2 yrs), garages; block card cards 2–4 and 6.
 - [ ] **3. Can I park here?** — time control + rules evaluator; map recolors by chosen time.
-- [ ] **4. Walking data** — *(done: pedestrian crashes, HIN, police reports and naloxone at corners, 2 yrs, daylight/dark, neighborhood shading, card)*; still to do: protections, speed limits.
+- [ ] **4. Walking data** — *(done: pedestrian crashes, HIN, police reports and naloxone at corners, 2 yrs, daylight/dark, neighborhood shading, card, the citywide summary)*; calls to police from the public at corners (`2zdj-bwza`); still to do: protections, speed limits.
 - [x] **4a. Cameras** — speed (`d5uh-bk84`) and red-light (`uzmr-g2uc`) cameras on the driving map; car break-ins at corners.
 - [x] **4b. Styles** — ticket-clock `9204808`'s type sizes, find bar, closed method rows, red location dot, tooltips,
   About cards (§1).
