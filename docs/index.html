@@ -10,14 +10,15 @@
   :root{
     color-scheme:light;
     --plane:#f2f2ef; --surface:#fcfcfb; --well:#e8e8e2;
-    --ink:#14140f; --ink-2:#56554f; --ink-3:#8a8880;
+    /* text is --ink or --ink-2; --ink-3 is only for small marks that aren't text (hover edges) */
+    --ink:#14140f; --ink-2:#56554f; --ink-3:#65645e;
     --rule:#e1e0d9; --edge:#c9c8c0;
     --accent:#2a78d6; --accent-ink:#1c5cab;
     --panel:#1a1a19; --panel-ink:#fcfcfb;
     --sign:#ffffff; --sign-red:#c8102e; --sign-ink:#111111;
     --measure:760px;
     /* the map stays light in dark mode too, as on LA Street Rules */
-    --map-bg:#fcfcfb; --map-line:#7fb2ee; --map-sel:#14140f; --map-halo:rgba(20,20,15,.28);
+    --map-bg:#fcfcfb; --map-line:#7fb2ee; --map-sel:#14140f; --map-halo:rgba(20,20,15,.28); --map-you:#d62828;
     /* walking map: blocks recede, and each layer has its own color */
     --walk-line:#d3ccbf; --people:#6a43c9; --drugs:#0b8a7f; --cars:#c07a12;
     /* walking: danger reads warm; driving keeps the blue accent */
@@ -57,8 +58,10 @@
   main{max-width:1280px;margin:0 auto;padding:26px 16px 72px}
   @media (min-width:640px){ main{padding-left:20px;padding-right:20px} }
   a{color:var(--accent-ink)}
-  .mast{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
-        color:var(--ink-3);display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
+  /* five text sizes: 12px mono labels and map tags, 14px small text (notes, legend, tooltips), 15px the card and search
+     messages, 16px reading text and every text input (iPhones zoom in on a smaller one), 18.5px the lede */
+  .mast{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+        color:var(--ink-2);display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
   .mast a{color:inherit}
   .mast .site{white-space:nowrap}
   .mast .here{color:var(--ink)}
@@ -69,14 +72,24 @@
   h2{font-family:"Barlow Condensed","Barlow",system-ui,sans-serif;font-weight:700;font-size:34px;line-height:1.02;margin:8px 0 14px;text-wrap:balance}
   p{max-width:var(--measure);margin:0 0 14px}
   .code{display:inline-flex;gap:10px;align-items:center;font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-        font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+        font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
   .code b{font-weight:600;color:var(--ink-2);border:1px solid var(--edge);border-radius:3px;padding:1px 6px;letter-spacing:.04em}
   section{margin-top:56px;padding-top:28px;border-top:1px solid var(--rule)}
   svg{display:block;max-width:100%;height:auto;overflow:visible}
-  .note{font-size:12.5px;line-height:1.45;color:var(--ink-3);margin:0}
-  .note b{color:var(--ink-2);font-weight:500}
+  .note{font-size:14px;line-height:1.5;color:var(--ink-2);max-width:var(--measure);margin:0}
+  .note b{color:var(--ink);font-weight:600}
   .note p{margin:0 0 6px;max-width:none}
-  .note.end{margin-top:40px}
+  .note a{color:inherit}
+  .note.end{margin-top:40px;max-width:none}
+  /* about this page, with the sister sites */
+  .about{margin:12px 0 0;font-size:16px;line-height:1.5;color:var(--ink-2)}
+  .sibs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0 0}
+  @media (max-width:640px){ .sibs{grid-template-columns:minmax(0,1fr)} }
+  .sib{display:block;background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:16px 18px;color:inherit;text-decoration:none}
+  .sib:hover{border-color:var(--ink-3)}
+  .sib-name{font-family:"Barlow Condensed","Barlow",system-ui,sans-serif;font-weight:700;font-size:26px;line-height:1.05;color:var(--ink)}
+  .sib-name::after{content:" →";color:var(--ink-3);font-weight:600}
+  .sib-txt{font-size:15px;line-height:1.5;color:var(--ink-2);margin:6px 0 0}
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   /* ---------- mode switch ---------- */
@@ -86,7 +99,7 @@
   .mode:hover{border-color:var(--ink-3)}
   .mode svg{grid-row:span 2;width:34px;height:34px}
   .mode .m-name{font-family:"Barlow Condensed","Barlow",sans-serif;font-weight:700;font-size:24px;line-height:1}
-  .mode .m-sub{font-size:13px;line-height:1.3;color:var(--ink-2)}
+  .mode .m-sub{font-size:14px;line-height:1.3;color:var(--ink-2)}
   .mode[aria-pressed="true"]{background:var(--ink);color:var(--plane);border-color:var(--ink)}
   .mode[aria-pressed="true"] .m-sub{color:color-mix(in oklab,var(--plane) 75%,var(--ink))}
   @media (max-width:420px){ .mode{grid-template-columns:1fr} .mode svg{grid-row:auto;width:26px;height:26px} .mode .m-sub{display:none} }
@@ -97,12 +110,13 @@
         font:500 14px "Barlow",system-ui,sans-serif;padding:5px 12px;border-radius:999px;min-height:34px}
   .chip:hover{border-color:var(--ink-3)}
   .chip[aria-pressed="true"]{background:var(--ink);color:var(--plane);border-color:var(--ink)}
-  .chip.sm{font-size:13px;padding:3px 10px;min-height:30px}
-  .chip:disabled,.chip:disabled:hover{opacity:.45;cursor:default;border-color:var(--edge)}
+  .chip.sm{font-size:14px;padding:3px 10px;min-height:30px}
+  /* a layer still to come: dashed and unfilled rather than faded, so its name stays readable */
+  .chip:disabled,.chip:disabled:hover{cursor:default;color:var(--ink-2);background:transparent;border-color:var(--edge);border-style:dashed}
   @media (max-width:560px){ .layers .chip:disabled{display:none} }   /* layers still to come, only where there's room */
-  .ctl-label{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-right:4px}
+  .ctl-label{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-right:4px}
   .ctl-row{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;margin:12px 0 0}
-  .ctl-row input[type=datetime-local]{font:14px "Barlow",system-ui,sans-serif;color:var(--ink);background:var(--surface);border:1px solid var(--edge);border-radius:8px;padding:4px 8px;min-height:34px}
+  .ctl-row input[type=datetime-local]{font:16px "Barlow",system-ui,sans-serif;color:var(--ink);background:var(--surface);border:1px solid var(--edge);border-radius:8px;padding:4px 8px;min-height:34px}
 
   /* ---------- finder + map ---------- */
   .explorer{display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:20px;align-items:start}
@@ -113,15 +127,17 @@
           font:600 15px "Barlow",system-ui,sans-serif;padding:7px 14px;border-radius:8px;min-height:40px}
   .locbtn:disabled{opacity:.6;cursor:progress}
   .locbtn svg{width:16px;height:16px;flex:none}
-  .searchbox{position:relative;flex:1 1 220px;max-width:420px}
-  .searchbox input{font:15px "Barlow",system-ui,sans-serif;color:var(--ink);background:var(--surface);border:1px solid var(--edge);
-        border-radius:8px;padding:8px 10px;min-height:40px;width:100%}
+  .loc-note{font-size:14px;color:var(--ink-2);margin:8px 0 0}
+  .searchbox{position:relative;flex:1 1 260px;max-width:420px}
+  .searchbox>svg{position:absolute;left:11px;top:12px;width:16px;height:16px;color:var(--ink-2);pointer-events:none}
+  .searchbox input{font:16px "Barlow",system-ui,sans-serif;color:var(--ink);background:var(--surface);border:1px solid var(--edge);
+        border-radius:8px;padding:8px 10px 8px 34px;min-height:40px;width:100%}
   .sugg{position:absolute;z-index:10;left:0;right:0;top:calc(100% + 4px);margin:0;padding:4px;list-style:none;background:var(--surface);
         border:1px solid var(--edge);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.12)}
   .sugg li{padding:7px 10px;border-radius:6px;cursor:pointer;font-size:15px;display:flex;justify-content:space-between;gap:12px}
-  .sugg li small{color:var(--ink-3);font-size:12.5px;white-space:nowrap}
+  .sugg li small{color:var(--ink-2);font-size:14px;white-space:nowrap}
   .sugg li[aria-selected="true"],.sugg li:hover{background:var(--well)}
-  .find-msg{font-size:14.5px;line-height:1.5;margin:12px 0 0;max-width:var(--measure)}
+  .find-msg{font-size:15px;line-height:1.5;margin:12px 0 0;max-width:var(--measure)}
   .find-msg:empty{display:none}
   .layers{margin:12px 0 0}
   .mapwrap{position:relative;margin:10px 0 0;background:var(--map-bg);border:1px solid var(--rule);border-radius:12px;overflow:hidden;
@@ -154,14 +170,14 @@
                font:600 18px/1 "Barlow",sans-serif;cursor:pointer}
   .zoom button.fit{font-size:11px;font-family:"IBM Plex Mono",monospace}
   .zoom button.north svg{width:20px;height:20px;margin:0 auto}   /* its needle turns with the map */
-  .maptag{position:absolute;bottom:6px;font-size:11px;padding:1px 6px;border-radius:4px;color:#56554f;background:rgba(252,252,251,.88)}
+  .maptag{position:absolute;bottom:6px;font-size:12px;padding:1px 6px;border-radius:4px;color:#56554f;background:rgba(252,252,251,.88)}
   .maptag a{color:inherit}
   .maptag.r{right:8px}
-  .maptag.hint{left:50%;top:10px;bottom:auto;transform:translateX(-50%);font-size:13px;padding:4px 10px;color:#14140f;white-space:nowrap}
+  .maptag.hint{left:50%;top:10px;bottom:auto;transform:translateX(-50%);font-size:14px;padding:4px 10px;color:#14140f;white-space:nowrap}
   @media (max-width:560px){ .maptag.hint{white-space:normal;text-align:center;width:max-content;max-width:calc(100% - 110px);left:10px;transform:none} }
-  #tip{position:fixed;z-index:20;pointer-events:none;background:var(--panel);color:var(--panel-ink);font-size:12.5px;line-height:1.45;
-       padding:8px 10px;border-radius:6px;max-width:260px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
-  .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2);margin:10px 0 0;padding:0;list-style:none}
+  #tip{position:fixed;z-index:20;pointer-events:none;background:var(--panel);color:var(--panel-ink);font-size:14px;line-height:1.45;
+       padding:8px 10px;border-radius:6px;max-width:280px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--ink-2);margin:10px 0 0;padding:0;list-style:none}
   .legend:empty{display:none}
   .legend li{display:inline-flex;align-items:center;gap:6px}
   .sw{width:18px;height:4px;border-radius:2px;display:inline-block;flex:none}
@@ -172,45 +188,54 @@
 
   /* ---------- the block card ---------- */
   .panel{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:18px 18px 6px;min-width:0}
-  .p-eyebrow{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  .p-eyebrow{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
   .p-title{font-family:"Barlow Condensed","Barlow",sans-serif;font-weight:700;font-size:32px;line-height:1;margin:4px 0 6px}
-  .p-sub{font-size:14px;color:var(--ink-2)}
+  .p-sub{font-size:15px;color:var(--ink-2)}
   .card{border-top:1px solid var(--rule);padding:16px 0 14px;margin-top:14px}
-  .card h4{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:11px;font-weight:500;letter-spacing:.1em;
-           text-transform:uppercase;color:var(--ink-3);margin:0 0 10px}
+  .card h4{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:12px;font-weight:500;letter-spacing:.1em;
+           text-transform:uppercase;color:var(--ink-2);margin:0 0 12px}
   .ph{font-size:14px;line-height:1.5;color:var(--ink-2)}
   .ph ul{margin:6px 0 0;padding-left:18px}
-  .src{font:11px/1.5 "IBM Plex Mono",ui-monospace,Menlo,monospace;color:var(--ink-3);margin-top:8px}
+  .src{font:12px/1.5 "IBM Plex Mono",ui-monospace,Menlo,monospace;color:var(--ink-2);margin-top:8px}
   .src::before{content:"data · "}
   .verdict{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 4px}
   .verdict>div{background:var(--well);border-radius:8px;padding:10px 12px}
-  .verdict .k{font:10.5px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
-  .verdict .v{font:600 18px "Barlow Condensed","Barlow",sans-serif;line-height:1.15;margin-top:2px;color:var(--ink-3)}
+  .verdict .k{font:12px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+  .verdict .v{font:600 18.5px "Barlow Condensed","Barlow",sans-serif;line-height:1.15;margin-top:2px;color:var(--ink-2)}
   .glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 4px}
   .glance>div{background:var(--well);border-radius:8px;padding:8px 10px}
-  .glance .k{display:block;font:10.5px "IBM Plex Mono",monospace;letter-spacing:.06em;color:var(--ink-3)}
+  .glance .k{display:block;font:12px "IBM Plex Mono",monospace;letter-spacing:.06em;color:var(--ink-2)}
   .glance .v{display:block;font:600 20px "IBM Plex Mono",monospace;color:var(--ink)}
-  .hours{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;height:36px;align-items:end;margin:4px 0 2px}
+  .kchart-t{font-size:14px;font-weight:600;margin:12px 0 6px}
+  .hours{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;height:36px;align-items:end;margin:0 0 2px}
   .hours i{display:block;background:var(--walk-soft);border-radius:2px 2px 0 0}
-  .ktab{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:4px}
+  /* hour labels sit on the hour they name; every 3 hours, or every 6 where the chart is narrow */
+  .card{container-type:inline-size}
+  .hours-ax{position:relative;height:18px;font:12px "IBM Plex Mono",monospace;color:var(--ink-2)}
+  .hours-ax span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+  .hours-ax span:first-child{transform:none}
+  .hours-ax span:last-child{transform:translateX(-100%)}
+  @container (max-width:340px){ .hours-ax .h3{display:none} }
+  .ktab{width:100%;border-collapse:collapse;font-size:15px;margin-top:4px}
   .ktab td{padding:5px 0;border-bottom:1px solid var(--rule);vertical-align:top}
-  .ktab td.n{text-align:right;font:13px "IBM Plex Mono",monospace;padding-left:12px;white-space:nowrap}
-  .ktab tr.zero td{color:var(--ink-3)}
-  .rank{font-size:14.5px;line-height:1.45;margin-top:10px}
-  .sm-note{font-size:13px;line-height:1.45;color:var(--ink-2);margin-top:8px}
-  .hours-ax{display:flex;justify-content:space-between;font:10.5px "IBM Plex Mono",monospace;color:var(--ink-3)}
-  .tbd{display:inline-block;font:500 10px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--walk);
-       border:1px solid currentColor;border-radius:3px;padding:0 5px;margin-left:6px;vertical-align:1px}
+  .ktab td.n{text-align:right;font:14px "IBM Plex Mono",monospace;padding-left:12px;white-space:nowrap}
+  .ktab tr.zero td{color:var(--ink-2)}
+  .rank{font-size:15px;line-height:1.45;margin-top:10px}
+  .sm-note{font-size:14px;line-height:1.5;color:var(--ink-2);margin-top:8px}
 
-  .aside{max-width:var(--measure);border-left:3px solid var(--accent);padding:4px 0 4px 16px;margin:26px 0;font-size:15px;color:var(--ink-2)}
+  .aside{max-width:var(--measure);border-left:3px solid var(--accent);padding:4px 0 4px 16px;margin:26px 0;font-size:16px;color:var(--ink-2)}
   body[data-mode="walk"] .aside{border-left-color:var(--walk)}
   .aside b{color:var(--ink)}
-  .method{display:grid;grid-template-columns:160px 1fr;gap:12px 22px;font-size:14.5px;margin:18px 0 0;max-width:var(--measure)}
-  .method dt{font-weight:600}
-  .method dd{margin:0;color:var(--ink-2)}
-  @media (max-width:560px){ .method{grid-template-columns:1fr;gap:4px} .method dd{margin-bottom:12px} }
-  footer{margin-top:44px;font-size:13px;color:var(--ink-3)}
-  footer ul{padding-left:18px;margin:6px 0 0}
+  /* the method: one row per topic, closed until tapped, so the page ends sooner */
+  .method{max-width:var(--measure);margin:18px 0 0}
+  .method details{border-top:1px solid var(--rule)}
+  .method summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px;padding:12px 2px;font-weight:600}
+  .method summary::-webkit-details-marker{display:none}
+  .method summary::after{content:"+";color:var(--ink-2);font-weight:400}
+  .method details[open] summary::after{content:"−"}
+  .method details>p,.method details>ul{color:var(--ink-2);margin:0 0 16px}
+  .method details>ul{padding-left:18px;font-size:15px}
+  .method details>ul li+li{margin-top:4px}
   @media (prefers-reduced-motion:no-preference){ .chip,.mode{transition:background-color .15s,border-color .15s,color .15s} }
 </style>
 
@@ -231,20 +256,22 @@
     </button>
     <button class="mode" id="modeWalk" data-mode="walk" aria-pressed="false">
       <svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="17" cy="5.5" r="2.5" fill="currentColor" stroke="none"/><path d="M15 11l-3.5 5 3 1.5M15 11l4 3 3.5 1M15 11l-1 8 4 3 1.5 6M14 19l-3 3.5-3 5"/></svg>
-      <span class="m-name">I'm walking</span><span class="m-sub">Where's safe to walk, and where to take care?</span>
+      <span class="m-name">I'm walking</span><span class="m-sub">Where do cars hit people, and what gets reported?</span>
     </button>
   </div>
 
   <div class="explorer">
     <div class="mapcol">
       <div class="findbar">
-        <button class="locbtn" id="locBtn"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2" fill="currentColor"/><path d="M8 0v2.6M8 13.4V16M0 8h2.6M13.4 8H16" stroke="currentColor" stroke-width="1.6"/></svg>Use my location</button>
+        <button class="locbtn" id="locBtn" aria-describedby="locNote"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2" fill="currentColor"/><path d="M8 0v2.6M8 13.4V16M0 8h2.6M13.4 8H16" stroke="currentColor" stroke-width="1.6"/></svg>Show blocks near me</button>
         <div class="searchbox">
-          <input type="search" id="q" placeholder="Street, address, corner or neighborhood" autocomplete="off" spellcheck="false"
-                 role="combobox" aria-label="Find a street, address, corner or neighborhood" aria-expanded="false" aria-controls="sugg" aria-autocomplete="list">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.8" cy="6.8" r="5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m10.6 10.6 4.4 4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input type="search" id="q" placeholder="Enter an address or neighborhood" autocomplete="off" spellcheck="false"
+                 role="combobox" aria-label="Enter a street, address or neighborhood" aria-expanded="false" aria-controls="sugg" aria-autocomplete="list">
           <ul class="sugg" id="sugg" role="listbox" hidden></ul>
         </div>
       </div>
+      <p class="loc-note" id="locNote">“Show blocks near me” only centers the map. The page doesn't send or save your location.</p>
       <div aria-live="polite"><p class="find-msg" id="findMsg"></p><div class="cands" id="cands"></div></div>
 
       <!-- when: driving asks when you'll park and for how long; walking asks day or night -->
@@ -379,37 +406,47 @@
   <section id="method">
     <div class="code"><b>Method</b> How this was measured</div>
     <h2>How this was measured, and what it can't tell you</h2>
-    <dl class="method" data-for="drive">
-      <dt>Blocks</dt><dd>Each line on the map is one stretch of street between two intersections, as San Francisco Public Works maps it, and is named by its hundred block, from the house numbers along it. Every other dataset on this page is joined to these stretches by the city's centerline number (CNN). Freeways and their ramps, private roads, and streets that exist only on paper are left out.</dd>
-      <dt>Data</dt><dd>SFMTA parking citations from the last two years, snapped to the nearest block side by their coordinates; the street sweeping schedule, parking regulations, meters and meter policies, all from data.sf.gov.</dd>
-      <dt>Can I park here?</dt><dd>Worked out in your browser from the posted rules for each block side, for the time and stay you pick. It can't see temporary signs that aren't in the city's data.</dd>
-      <dt>Cameras</dt><dd>SFMTA's speed cameras (with their posted limit, and the tickets and warnings each issued since it started, up to two years) and red-light cameras (tickets per intersection over the last two years).</dd>
-      <dt>Car break-ins</dt><dd>SFPD reports of theft from a vehicle and of auto parts in the last two years, at the corner SFPD places them.</dd>
-      <dt>Limits</dt><dd>A ticket only appears when someone broke the rule, so quiet blocks look less enforced than they are. Always read the posted signs.</dd>
-    </dl>
-    <dl class="method" data-for="walk">
-      <dt>Blocks</dt><dd>Each line on the map is one stretch of street between two intersections, as San Francisco Public Works maps it, and is named by its hundred block, from the house numbers along it. Every other dataset on this page is joined to these stretches by the city's centerline number (CNN). Freeways and their ramps, private roads, and streets that exist only on paper are left out.</dd>
-      <dt>Pedestrians hit</dt><dd>Traffic crashes resulting in injury (SFPD, via data.sf.gov) from the two years up to the latest in the data, where the other party was a pedestrian. A crash at an intersection counts for every block that meets there; one mid-block counts for that block. "Badly hurt" is the report's severe injury; the cause is the report's primary collision factor, in plainer words. The High Injury Network is Vision Zero's 2024 list of the streets where the most severe and fatal crashes happen.</dd>
-      <dt>Police reports</dt><dd>SFPD incident reports from the last two years, grouped into robbery; assault and other violence (assault, homicide, rape, sex offenses); pickpocketing and purse snatching; weapons; drug offenses; and naloxone given for an overdose (SFPD's code 51050, used when an officer gives naloxone). A report counts once per group, and supplements to a report aren't counted again. SFPD publishes each report at a nearby corner rather than the exact place, so the page shows corners, not blocks. The map shades neighborhoods by reports of violence and robbery per km of street, and a block's card compares its two corners with every other block's.</dd>
-      <dt>After dark</dt><dd>Between sunset and sunrise in San Francisco on that date.</dd>
-      <dt>Limits</dt><dd>Only reported crashes with an injury are counted, and the crash data runs about two months behind. A street with few crashes may just have few people walking on it; counts aren't adjusted for foot traffic. Police reports show where reports were taken, which depends on where police patrol and on who calls or files online, as much as on where things happen. Naloxone reports only count overdoses where police gave it, a small share of all overdoses; paramedics' responses aren't published by location.</dd>
-    </dl>
-    <footer>
-      Sources
-      <ul>
-        <li><a href="https://data.sf.gov/d/3psu-pn9h">Streets – Active and Retired</a>, San Francisco Public Works via DataSF (dataset 3psu-pn9h, public domain): the blocks, their names, house numbers and cross streets</li>
-        <li><a href="https://data.sf.gov/d/ubvf-ztfx">Traffic Crashes Resulting in Injury</a>, SFPD via DataSF (ubvf-ztfx), and the <a href="https://data.sf.gov/d/enwt-3u8m">2024 High Injury Network</a>, SF Department of Public Health (enwt-3u8m)</li>
-        <li><a href="https://data.sf.gov/d/wg3w-h783">Police Department Incident Reports: 2018 to Present</a>, SFPD via DataSF (wg3w-h783)</li>
-        <li><a href="https://data.sf.gov/d/d5uh-bk84">Automated Speed Enforcement Citations</a> (d5uh-bk84) and <a href="https://data.sf.gov/d/uzmr-g2uc">Red Light Camera Citations</a> (uzmr-g2uc), SFMTA via DataSF</li>
-        <li><a href="https://data.sf.gov/Geographic-Locations-and-Boundaries/Analysis-Neighborhoods/j2bu-swwd">Analysis Neighborhoods</a>, DataSF (dataset j2bu-swwd, public domain): the neighborhood outlines on the map</li>
-        <li>Map © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, loaded from openstreetmap.org</li>
-      </ul>
-    </footer>
+    <!-- one row per topic, all closed; rows for the other mode are hidden, and Sources is always last -->
+    <div class="method">
+      <details><summary>Blocks</summary>
+        <p>Each line on the map is one stretch of street between two intersections, as San Francisco Public Works maps it, and is named by its hundred block, from the house numbers along it. Every other dataset on this page is joined to these stretches by the city's centerline number (CNN). Freeways and their ramps, private roads, and streets that exist only on paper are left out.</p></details>
+      <details data-for="drive"><summary>Data</summary>
+        <p>SFMTA parking citations from the last two years, snapped to the nearest block side by their coordinates; the street sweeping schedule, parking regulations, meters and meter policies, all from data.sf.gov.</p></details>
+      <details data-for="drive"><summary>Can I park here?</summary>
+        <p>Worked out in your browser from the posted rules for each block side, for the time and stay you pick. It can't see temporary signs that aren't in the city's data.</p></details>
+      <details data-for="drive"><summary>Cameras</summary>
+        <p>SFMTA's speed cameras (with their posted limit, and the tickets and warnings each issued since it started, up to two years) and red-light cameras (tickets per intersection over the last two years).</p></details>
+      <details data-for="drive"><summary>Car break-ins</summary>
+        <p>SFPD reports of theft from a vehicle and of auto parts in the last two years, at the corner SFPD places them.</p></details>
+      <details data-for="walk"><summary>Pedestrians hit</summary>
+        <p>Traffic crashes resulting in injury (SFPD, via data.sf.gov) from the two years up to the latest in the data, where the other party was a pedestrian. A crash at an intersection counts for every block that meets there; one mid-block counts for that block. "Badly hurt" is the report's severe injury; the cause is the report's primary collision factor, in plainer words. The High Injury Network is Vision Zero's 2024 list of the streets where the most severe and fatal crashes happen.</p></details>
+      <details data-for="walk"><summary>Police reports</summary>
+        <p>SFPD incident reports from the last two years, grouped into robbery; assault and other violence (assault, homicide, rape, sex offenses); pickpocketing and purse snatching; weapons; drug offenses; and naloxone given for an overdose (SFPD's code 51050, used when an officer gives naloxone). A report counts once per group, and supplements to a report aren't counted again. SFPD publishes each report at a nearby corner rather than the exact place, so the page shows corners, not blocks. The map shades neighborhoods by reports of violence and robbery per km of street, and a block's card compares its two corners with every other block's.</p></details>
+      <details data-for="walk"><summary>After dark</summary>
+        <p>Between sunset and sunrise in San Francisco on that date.</p></details>
+      <details data-for="drive"><summary>Limits</summary>
+        <p>A ticket only appears when someone broke the rule, so quiet blocks look less enforced than they are. Always read the posted signs.</p></details>
+      <details data-for="walk"><summary>Limits</summary>
+        <p>Only reported crashes with an injury are counted, and the crash data runs about two months behind. A street with few crashes may just have few people walking on it; counts aren't adjusted for foot traffic. Police reports show where reports were taken, which depends on where police patrol and on who calls or files online, as much as on where things happen. Naloxone reports only count overdoses where police gave it, a small share of all overdoses; paramedics' responses aren't published by location.</p></details>
+      <details><summary>Sources</summary>
+        <ul>
+          <li><a href="https://data.sf.gov/d/3psu-pn9h">Streets – Active and Retired</a>, San Francisco Public Works via DataSF (dataset 3psu-pn9h, public domain): the blocks, their names, house numbers and cross streets</li>
+          <li><a href="https://data.sf.gov/d/ubvf-ztfx">Traffic Crashes Resulting in Injury</a>, SFPD via DataSF (ubvf-ztfx), and the <a href="https://data.sf.gov/d/enwt-3u8m">2024 High Injury Network</a>, SF Department of Public Health (enwt-3u8m)</li>
+          <li><a href="https://data.sf.gov/d/wg3w-h783">Police Department Incident Reports: 2018 to Present</a>, SFPD via DataSF (wg3w-h783)</li>
+          <li><a href="https://data.sf.gov/d/d5uh-bk84">Automated Speed Enforcement Citations</a> (d5uh-bk84) and <a href="https://data.sf.gov/d/uzmr-g2uc">Red Light Camera Citations</a> (uzmr-g2uc), SFMTA via DataSF</li>
+          <li><a href="https://data.sf.gov/Geographic-Locations-and-Boundaries/Analysis-Neighborhoods/j2bu-swwd">Analysis Neighborhoods</a>, DataSF (dataset j2bu-swwd, public domain): the neighborhood outlines on the map</li>
+          <li>Map © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, loaded from openstreetmap.org</li>
+        </ul></details>
+    </div>
   </section>
 
   <section id="about">
     <div class="code"><b>About</b> This page</div>
-    <p>Made by <a href="https://github.com/citina">Citina Liang</a>, after <a href="https://citina.github.io/ticket-clock/streets/">LA Street Rules</a>. All from San Francisco's open data.</p>
+    <p class="about">Made by <a href="https://github.com/citina">Citina Liang</a>, a PhD candidate in Industrial &amp; Systems Engineering at USC Viterbi who models how people behave and how diseases spread. SF Streets is the San Francisco sister of LA Street Rules: the same map and blocks, built from San Francisco's open data, with a side for people walking. The code is on <a href="https://github.com/citina/sf-streets">GitHub</a>.</p>
+    <div class="sibs">
+      <a class="sib" href="https://citina.github.io/ticket-clock/streets/"><div class="sib-name">LA Street Rules</div><div class="sib-txt">Every block in the City of Los Angeles: its sweeping schedule, its meters, and what gets ticketed there.</div></a>
+      <a class="sib" href="https://citina.github.io/curb-log/"><div class="sib-name">Curb Log</div><div class="sib-txt">Available parking right now on Vermont Ave by W 36th St, and how it usually changes on weekdays, from LADOT's parking sensors.</div></a>
+    </div>
   </section>
 
   <div class="note end">
@@ -427,8 +464,11 @@ function S(tag, attrs, parent){ const e=document.createElementNS(NS,tag); for(co
 function H(tag, props, parent){ const e=document.createElement(tag); Object.assign(e, props||{}); if(parent) parent.appendChild(e); return e; }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const tip=$('#tip');
-function showTip(e, html){ tip.innerHTML=html; tip.hidden=false; const r=tip.getBoundingClientRect(); let x=e.clientX+14, y=e.clientY+14;
-  if(x+r.width>innerWidth-8) x=e.clientX-r.width-14; if(y+r.height>innerHeight-8) y=e.clientY-r.height-14; tip.style.left=x+'px'; tip.style.top=y+'px'; }
+// tooltips are for a mouse only (a finger scrolling past would flash them). The tip is measured at the top left, where it
+// has room to take its full width, then kept on screen.
+function showTip(e, html){ tip.innerHTML=html; tip.style.left=tip.style.top='0px'; tip.hidden=false; const r=tip.getBoundingClientRect(); let x=e.clientX+14, y=e.clientY+14;
+  if(x+r.width>innerWidth-8) x=e.clientX-r.width-14; if(y+r.height>innerHeight-8) y=e.clientY-r.height-14;
+  tip.style.left=Math.max(8,Math.min(x,innerWidth-r.width-8))+'px'; tip.style.top=Math.max(8,Math.min(y,innerHeight-r.height-8))+'px'; }
 function hideTip(){ tip.hidden=true; }
 const stacked=()=>matchMedia('(max-width:1000px)').matches, still=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const msg=html=>{ $('#findMsg').innerHTML=html; };
@@ -698,8 +738,9 @@ async function fillCards(b){
     ${b.hin?' The street is on Vision Zero\'s High Injury Network, where the city\'s most severe and fatal crashes concentrate.':''}</div>`;
   if(hit.length){
     const byH=new Array(24).fill(0); hit.forEach(x=>byH[x[2]]++); const mx=Math.max(...byH);
-    h+=`<div class="hours" aria-hidden="true">${byH.map(n=>`<i style="height:${n?Math.max(8,100*n/mx):2}%${n?'':';opacity:.35'}"></i>`).join('')}</div>
-      <div class="hours-ax"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span></div>`;
+    h+=`<div class="kchart-t">What time of day they were hit</div>
+      <div class="hours" aria-hidden="true">${byH.map(n=>`<i style="height:${n?Math.max(8,100*n/mx):2}%${n?'':';opacity:.35'}"></i>`).join('')}</div>
+      <div class="hours-ax" aria-hidden="true">${['12am','3am','6am','9am','noon','3pm','6pm','9pm','12am'].map((t,i)=>`<span${i%2?' class="h3"':''} style="left:${i*12.5}%">${t}</span>`).join('')}</div>`;
     if(walkWhen==='any'){ const dk=hit.filter(x=>x[4]).length; h+=`<div class="sm-note">${dk} of ${hit.length} after dark.</div>`; }
     const why={}; hit.forEach(x=>{ why[x[5]]=(why[x[5]]||0)+1; });
     h+=`<div class="sm-note" style="margin-top:12px">Main cause in the police report:</div><table class="ktab">${Object.entries(why).sort((a,c)=>c[1]-a[1]).slice(0,3)
@@ -747,8 +788,10 @@ function drawCams(){
 // the markers keep their size on screen and stay upright when the map turns
 function placeCams(){ const u=vb.w/(wrap.clientWidth||600), deg=-rot*180/Math.PI;
   camEls.forEach(([g,x,y])=>g.setAttribute('transform',`translate(${x} ${y}) rotate(${deg}) scale(${u})`)); }
+// your location: red, so it doesn't get lost among the blue block lines
 function drawYou(){ gYou.innerHTML=''; if(!fix) return; const u=vb.w/(wrap.clientWidth||600);
-  S('circle',{cx:fix[0],cy:fix[1],r:7*u,fill:'var(--accent)',stroke:'var(--map-bg)','stroke-width':2.5,'vector-effect':'non-scaling-stroke'},gYou); }
+  S('circle',{cx:fix[0],cy:fix[1],r:16*u,fill:'var(--map-you)','fill-opacity':.18,stroke:'var(--map-you)','stroke-opacity':.45,'stroke-width':1,'vector-effect':'non-scaling-stroke'},gYou);
+  S('circle',{cx:fix[0],cy:fix[1],r:7*u,fill:'var(--map-you)',stroke:'#fff','stroke-width':3,'vector-effect':'non-scaling-stroke'},gYou); }
 // after a search on a phone, bring the map into view if it's off screen
 function showMap(){ if(!stacked()) return; const r=wrap.getBoundingClientRect();
   if(r.top<0||r.bottom>innerHeight) wrap.scrollIntoView({block:r.height>innerHeight?'start':'nearest',behavior:still()?'auto':'smooth'}); }
@@ -929,7 +972,7 @@ function legend(){ const near=vb.w*PX_M<=SHOW_M, m=mode(), key=[near,!!selected,
     if(near&&layers.cars) item(disc('var(--cars)'),'Car break-ins reported at a corner (bigger: more)'); }
   if(HOODS&&near) item(`height:0;border-top:2px dashed ${edge};${bg}`,'Neighborhood edge');
   else if(HOODS&&!(m==='walk'&&META)) item(`width:16px;height:12px;border-radius:2px;border:1.5px solid ${edge};background:color-mix(in oklab,var(--map-line) 20%,var(--map-bg))`,'Neighborhood');
-  if(fix) item('width:12px;height:12px;border-radius:50%;background:var(--accent)','Your location'); }
+  if(fix) item('width:14px;height:14px;border-radius:50%;background:var(--map-you);border:2.5px solid #fff;box-shadow:0 0 0 3px color-mix(in oklab,var(--map-you) 25%,transparent)','Your location'); }
 
 /* ============ start ============ */
 fitSF();
