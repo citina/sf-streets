@@ -1,0 +1,87 @@
+name: weekly data
+
+# Rebuilds the page's data from data.sf.gov once a week (fetch_sf.py, then analyze_sf.py) and publishes it as the
+# sf-data release instead of committing it, so the repo doesn't grow every week. pages.yml puts the release into
+# docs/data/ when it deploys; this starts it at the end, since a release made with GITHUB_TOKEN doesn't trigger it.
+# Police reports, calls and the street centerlines update daily and the crash data about monthly, so weekly is
+# enough. GitHub's cron is best-effort, which is fine here: a late run only publishes a few hours later.
+on:
+  schedule:
+    - cron: "23 15 * * 1"   # Mondays 15:23 UTC (8:23 am PDT, 7:23 am PST)
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Publish even if a count fell by more than 10% (after checking why)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: weekly
+  cancel-in-progress: false
+
+permissions:
+  contents: write           # publish the sf-data release
+  actions: write            # start the Pages deploy
+
+jobs:
+  data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash         # -eo pipefail
+    steps:
+      - uses: actions/checkout@v4
+
+      # the scripts use only the standard library
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch from data.sf.gov
+        run: python3 -u fetch_sf.py
+
+      - name: Analyze
+        run: python3 -u analyze_sf.py
+
+      # The two-year windows roll, so the counts move a little every week; a big drop means a broken download.
+      # A failed run leaves last week's release, and so the page, as it was.
+      - name: Check the counts against last week's
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          python3 -c "import json; m = json.load(open('docs/data/index.json'))
+          print('blocks:', m['blocks']); [print(f'{k}:', m[k]['n']) for k in ('police', 'calls', 'crashes')]" > counts.txt
+          old=$(gh release view sf-data --json body --jq .body 2>/dev/null || true)
+          fell=0
+          while read -r key new; do
+            prev=$(sed -n "s/^$key //p" <<<"$old")
+            echo "$key ${prev:-none yet} -> $new"
+            if [ -n "$prev" ] && [ "$new" -lt $((prev * 90 / 100)) ]; then
+              echo "::error::${key%:} fell from $prev to $new"; fell=1
+            fi
+          done < counts.txt
+          if [ "$fell" = 1 ] && [ "$FORCE" != "true" ]; then
+            echo "not publishing; run it by hand with force once the drop is understood"; exit 1
+          fi
+
+      - name: Publish as the sf-data release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tar -czf sf-data.tar.gz -C docs data
+          ends=$(python3 -c "import json; m = json.load(open('docs/data/index.json'))
+          print(f\"police reports through {m['police']['end']}, calls through {m['calls']['end']}, crashes through {m['crashes']['end']}\")")
+          notes=$(printf 'Data for SF Streets (docs/data/), rebuilt every week by weekly.yml: %s.\n\n%s\n' "$ends" "$(cat counts.txt)")
+          if gh release view sf-data >/dev/null 2>&1; then
+            gh release upload sf-data sf-data.tar.gz --clobber
+            gh release edit sf-data --notes "$notes"
+          else
+            gh release create sf-data sf-data.tar.gz --title "SF Streets data" --notes "$notes" --latest=false
+          fi
+
+      - name: Start the Pages deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "${{ github.repository }}" --ref "${{ github.ref_name }}"

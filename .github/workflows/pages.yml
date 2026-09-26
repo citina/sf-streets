@@ -1,0 +1,43 @@
+name: deploy page
+
+# Publishes docs/ to GitHub Pages on pushes that change it, and after each weekly data run (weekly.yml starts it by
+# hand: what a workflow does with GITHUB_TOKEN doesn't trigger on: push). The block data isn't in the repo; it comes
+# from the sf-data release.
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add the data from the sf-data release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release download sf-data --pattern sf-data.tar.gz --dir "$RUNNER_TEMP"; then
+            tar -xzf "$RUNNER_TEMP/sf-data.tar.gz" -C docs
+          else
+            echo "::warning::no sf-data release yet; the page will show only the neighborhoods"
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4

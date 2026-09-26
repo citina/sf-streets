@@ -498,9 +498,9 @@ for s, cnn, h, key, f, t, sd in index:
 day = lambda t: str(t.date())
 meta = dict(built=str(date.today()), streets_as_of=max(r.get("data_as_of", "") for r in segs)[:10], cell=CELL,
             blocks=len(index), names=names, hoods=hoods, hood_stats=per_hood, cells=cell_keys,
-            police=dict(start=day(p_start + timedelta(days=1)), end=day(p_end), kinds=KINDS, people=PERSON, drugs=DRUGS),
-            calls=dict(start=day(q_start + timedelta(days=1)), end=day(q_end), groups=[g for g, _ in CALL_GROUPS]),
-            crashes=dict(start=day(c_start + timedelta(days=1)), end=day(c_end), causes=causes,
+            police=dict(start=day(p_start + timedelta(days=1)), end=day(p_end), n=len(seen), kinds=KINDS, people=PERSON, drugs=DRUGS),
+            calls=dict(start=day(q_start + timedelta(days=1)), end=day(q_end), n=n_calls, groups=[g for g, _ in CALL_GROUPS]),
+            crashes=dict(start=day(c_start + timedelta(days=1)), end=day(c_end), n=sum(n_crash.values()), causes=causes,
                          severity=["complaint of pain", "visible injury", "severe injury", "killed"]),
             cams=sorted(cams, key=lambda c: (c[0], c[3])), summary=summary)
 (OUT / "index.json").write_text(json.dumps(meta, separators=(",", ":")))

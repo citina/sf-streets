@@ -27,7 +27,7 @@ and method text for each mode. The mode lives in the URL (`#drive` / `#walk`) so
 - Data split into ~1 km map cells (`data/cells/{key}.json`) so the page only loads what's on screen, plus
   `index.json` and `streets.json` for search.
 - Pipeline shape: `fetch_*.py` → raw downloads (not committed) → `analyze_*.py` → `docs/data/` (release asset) →
-  weekly GitHub Action → Pages. `pages.yml` and `weekly.yml` port with new names.
+  weekly GitHub Action → Pages (`weekly.yml`, `pages.yml`; built).
 
 **Easier in SF than in LA**
 
@@ -165,7 +165,8 @@ data.sf.gov.
 - [x] **4b. Styles** — ticket-clock `9204808`'s type sizes, find bar, closed method rows, red location dot, tooltips,
   About cards (§1).
 - [ ] **5. Temporary** — closures and tow zones at the chosen time.
-- [ ] **6. Automation** — weekly workflow, city-data release asset, Pages.
+- [x] **6. Automation** — `weekly.yml` (Mondays: fetch, analyze, count check, `sf-data` release) and `pages.yml` (Pages,
+  with the release unpacked into `docs/data/`). Live at https://citina.github.io/sf-streets/ (2026-09-26).
 - [ ] **7. Words** — explainer sections, method, disclaimers, README with screenshots.
 
 ---
@@ -182,8 +183,8 @@ data.sf.gov.
    **Decided (Citina, 2026-09-25):** include police reports on the walking side, and naloxone (overdose) reports, from the
    last two years; walking is now the focus. Built as corner counts by kind, shown as map layers (violence and robbery;
    drugs and overdoses) and on the card with a citywide rank, with the reporting and patrol caveat in the card and method.
-3. **Publish.** The repo is public at `citina/sf-streets` (2026-09-25). Still open: turn on GitHub Pages (needs the
-   weekly data workflow, since `docs/data/` isn't committed), and list it as a sister site on the ticket-clock pages?
+3. **Publish.** Public at `citina/sf-streets` (2026-09-25), on GitHub Pages with weekly data (2026-09-26). Still open:
+   list it as a sister site on the ticket-clock pages?
 4. **Map in dark mode.** Kept light, as on LA Street Rules; revisit only if LA changes.
 5. **Time window.** Two years for everything dated (Citina: "2 or 3 years"). Two because SFPD changed the set of corners
    it snaps reports to on 2024-04-24, so two years stays on one set; `WINDOW` in `analyze_sf.py` changes it.
