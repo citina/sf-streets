@@ -3,8 +3,8 @@ name: weekly data
 # Rebuilds the page's data from data.sf.gov once a week (fetch_sf.py, then analyze_sf.py) and publishes it as the
 # sf-data release instead of committing it, so the repo doesn't grow every week. pages.yml puts the release into
 # docs/data/ when it deploys; this starts it at the end, since a release made with GITHUB_TOKEN doesn't trigger it.
-# Police reports, calls and the street centerlines update daily and the crash data about monthly, so weekly is
-# enough. GitHub's cron is best-effort, which is fine here: a late run only publishes a few hours later.
+# Police reports, calls, parking tickets, meters and the street centerlines update daily and the crash data about
+# monthly, so weekly is enough. GitHub's cron is best-effort, which is fine here: a late run only publishes a few hours later.
 on:
   schedule:
     - cron: "23 15 * * 1"   # Mondays 15:23 UTC (8:23 am PDT, 7:23 am PST)
@@ -26,7 +26,7 @@ permissions:
 jobs:
   data:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75     # a run without the ticket cache downloads two years of tickets, about 20 minutes
     defaults:
       run:
         shell: bash         # -eo pipefail
@@ -37,6 +37,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      # Parking tickets come a month at a time (fetch_sf.py) and a month changes little once it's over: keep them
+      # between runs, so a run downloads the last two months and the few whose copies are over four weeks old
+      - uses: actions/cache@v4
+        with:
+          path: data/raw/tickets
+          key: tickets-${{ github.run_id }}
+          restore-keys: tickets-
 
       - name: Fetch from data.sf.gov
         run: python3 -u fetch_sf.py
@@ -52,7 +60,7 @@ jobs:
           FORCE: ${{ inputs.force }}
         run: |
           python3 -c "import json; m = json.load(open('docs/data/index.json'))
-          print('blocks:', m['blocks']); [print(f'{k}:', m[k]['n']) for k in ('police', 'calls', 'crashes')]" > counts.txt
+          print('blocks:', m['blocks']); [print(f'{k}:', m[k]['n']) for k in ('police', 'calls', 'crashes', 'tickets')]" > counts.txt
           old=$(gh release view sf-data --json body --jq .body 2>/dev/null || true)
           fell=0
           while read -r key new; do
@@ -72,7 +80,7 @@ jobs:
         run: |
           tar -czf sf-data.tar.gz -C docs data
           ends=$(python3 -c "import json; m = json.load(open('docs/data/index.json'))
-          print(f\"police reports through {m['police']['end']}, calls through {m['calls']['end']}, crashes through {m['crashes']['end']}\")")
+          print(f\"police reports through {m['police']['end']}, calls through {m['calls']['end']}, crashes through {m['crashes']['end']}, parking tickets through {m['tickets']['end']}\")")
           notes=$(printf 'Data for SF Streets (docs/data/), rebuilt every week by weekly.yml: %s.\n\n%s\n' "$ends" "$(cat counts.txt)")
           if gh release view sf-data >/dev/null 2>&1; then
             gh release upload sf-data sf-data.tar.gz --clobber

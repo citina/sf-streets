@@ -1,13 +1,16 @@
 # SF Streets — data sources
 
-What the page is built from, what each dataset is used for, and what was looked at and left out. Checked 2026-09-25.
+What the page is built from, what each dataset is used for, and what was looked at and left out. Checked 2026-09-25
+(walking) and 2026-09-26 (driving).
 Only datasets with **a place for each row** (coordinates, a line or shape, or a key that places it, like a CNN or a
 meter's post ID) and **data from the last three years** are listed.
 Everything is from data.sf.gov (Socrata; SODA API at `https://data.sf.gov/resource/<id>.json`) unless noted.
-`fetch_sf.py` downloads, `analyze_sf.py` builds `docs/data/`, `hoods.py` writes `docs/hoods.json`.
+`fetch_sf.py` downloads, `analyze_sf.py` builds `docs/data/`, `hoods.py` writes `docs/hoods.json`. Two datasets that
+change daily (closures and temporary no-parking signs) are loaded by the page itself instead.
 
 Dated data covers the **two years up to each dataset's latest date** (`WINDOW` in `analyze_sf.py`). `fetch_sf.py`
-downloads 28 months back to leave room for the crash data's ~2-month lag. The walking summary's totals per year are
+downloads 28 months back to leave room for the crash data's ~2-month lag, and parking tickets from the month the window
+starts in. The walking summary's totals per year are
 the exception: data.sf.gov counts them for every full year (pedestrians hit since 2015, police reports since 2018), and
 `fetch_sf.py trends` downloads only those totals.
 
@@ -23,6 +26,14 @@ the exception: data.sf.gov counts them for every full year (pedestrians hit sinc
 | Law Enforcement Dispatched Calls for Service: Closed | `2zdj-bwza` | Walking: "Calls to police" rings at corners, and the card's calls per group (with the half hour of each, for its charts) and rank | Calls from the public only (`onview_flag` N; a third of all calls are officers' own stops, which show where police patrol). Four groups (`CALL_GROUPS` in `fetch_sf.py`, below): 110,724 calls at 5,718 corners. Each call is placed at a nearby intersection (`intersection_id`, the same node CNN as the police reports' corners); sensitive calls have no place. Calls aren't checked: for these types, a third ended with no one there when police arrived and 12% in a written report |
 | Automated Speed Enforcement Citations | `d5uh-bk84` | Driving: 56 speed-camera markers with the posted limit, tickets and warnings; "Cameras near here" on the card | Daily counts per site, summed over the window (the cameras started in April 2025; the data runs about 3 months behind) |
 | Red Light Camera Citations | `uzmr-g2uc` | Driving: 13 red-light camera markers with tickets per intersection; "Cameras near here" on the card | Monthly counts per intersection and direction |
+| SFMTA - Parking Citations & Fines | `ab4h-6ztd` | Driving: "Tickets written here" (kinds, the fine now, usual day and time, half-hour charts), tickets per block on the map, how often each side's cleaning days got ticketed, and the driving summary | ~1.26M a year placed on blocks, 2,521,895 in the window. Downloaded a month at a time as CSV. Placed by the address written on the ticket: the block whose house numbers include it, the side by odd or even (98% place); tickets without a usable address by their coordinates, which are address points about 11 m off the street. The window ends on the last day with at least half the usual count for its weekday (the city fills in the last few days late); rows dated after today are typos. Kind names are SFMTA's short descriptions in plain words (`T_KIND` in `analyze_sf.py`) |
+| Street Sweeping Schedule | `yhqp-riqs` | Driving: each side's street-cleaning sign, next dates, and "Can I park here?" | 37.9k rows, one per block side (CNN and L/R, with the side's compass name) and weekday, with hours, weeks of the month and whether it's swept on holidays; "Holiday" rows give holiday hours. 12,202 blocks. L and R are left and right of the centerline's direction, the same as its address ranges. Rows under CNNs the centerlines have retired (47 segments, where two were merged into one) go on the block their line runs along, with L and R flipped if it ran the other way |
+| Parking regulations (except non-metered color curb) | `hi6h-neyh` | Driving: time limits, residential permit areas, pay or permit, no parking any time or at set hours, no overnight parking, government permits only, no oversized vehicles | ~7.8k lines drawn along the curb, with no CNN: placed on the block side they run along (within 20 m, roughly parallel) for at least a quarter of its length; 4,691 blocks. Of the 2,500 blocks with 20 or more permit-area tickets, 40 get no permit area |
+| Parking Meters | `8vzz-qzz9` | Driving: metered spaces per side by cap color | On-street meters in use (active `M` or pay-by-plate `P`): 28,478 spaces on 2,157 blocks. Placed by their CNN (`street_seg_ctrln_id`) and, for the side, their position (98.5% agree with the house number's side) |
+| Meter Policies | `qq7v-hds4` | Driving: each meter's paid hours, rates and time limits, tow-away hours, and hours kept for another use | Per meter post and weekday, in effect today; downloaded as CSV without the free pieces. `OP` paid, `ALT` with a rate open to all (a yellow or red meter's other hours), `ALT` without a rate kept for another use (often commuter-shuttle hours), `TOW` tow-away, `PRE` pay ahead (not shown) |
+| SFMTA Managed Off-street Parking | `vqzx-t7c4` | Driving: "City garages & lots" on the map and nearby on the card | 58 garages and lots run by SFMTA, the Port, Recreation and Parks and Caltrans; 51 placed (by main entrance, or by address). No hours or rates. Privately run garages aren't in the city's open data |
+| Temporary Street Closures | `8x25-yybr` | Driving: streets closed at the time picked (map and "Can I park here?"), and the card's closures | Loaded by the page itself from data.sf.gov, the whole city's, for today and the next two weeks (~500 rows): special events, shared spaces and permitted work, per CNN. Only SFMTA's permits; not closures by Public Works or the police |
+| Parking Signs / Street Space Permits | `sftu-nd43` | Driving: temporary no-parking signs in "Can I park here?" and on the card | Loaded by the page from data.sf.gov: permits posted in the last four months and still running (a few dozen at a time), with CNN, side, days, hours and length along the curb. A small share of the temporary signs on the street |
 | OpenStreetMap tiles *(not DataSF)* | — | The map images | Loaded by the reader's browser from tile.openstreetmap.org, only for the part of the map on screen |
 
 **The six police kinds** (`KINDS` in `analyze_sf.py`):
@@ -61,26 +72,17 @@ the exception: data.sf.gov counts them for every full year (pedestrians hit sinc
   and sit/lie enforcement.
 - **Speed cameras:** `avg_issued_speed` and the mph-over buckets (`_11_to_15_mph_over` and so on) are downloaded but
   not shown.
+- **Parking citations:** Muni fare and passenger conduct citations (fare evasion, failure to show proof of payment and
+  the like: ~85k in two years, written at stops and stations), "no violation" rows, ~16k tickets that place on no block on the
+  map (station names, empty or unmatched addresses), and ticket codes (the page shows plain names).
+- **Parking regulations:** free-text details (resolution numbers, notes), and the `rpp_sym` map styling.
+- **Meters:** meters temporarily inactive (`T`), removed or unknown, and off-street meters; the pay-ahead (`PRE`)
+  pieces of their policies.
 
 ## Planned, not used yet
 
-**Driving** (milestones 2, 3 and 5 in [PLAN.md](PLAN.md))
-
-| Use | Dataset | ID | Notes |
-|---|---|---|---|
-| Tickets written | SFMTA Parking Citations & Fines | `ab4h-6ztd` | ~1.38M in 12 months, 98.4% with coordinates; top: street cleaning (≈41%), meter expired, RPP overtime, yellow/red zone. **Has future-dated rows (e.g. 2044)**: drop anything after `data_as_of` |
-| Street cleaning, per side | Street Sweeping Schedule | `yhqp-riqs` | 37.9k block sides with day, hours and week flags; *City Infrastructure* category |
-| Time limits, permit areas, no parking | Parking regulations (except non-metered color curb) | `hi6h-neyh` | `regulation`, `days`, `hrs_begin/end`, `hrlimit`, `rpparea1..3`, `exceptions`; ~7.8k rows, mostly time limits. **No CNN column**: join to block sides by geometry |
-| The posted signs | Street Signs | `m48z-6ji4` | Sign legend and CNN: 25k street-cleaning, 7k permit, 2k no-parking-any-time, 3k tow signs. Lets the card quote the sign |
-| Meters | Parking Meters | `8vzz-qzz9` | Per space; `street_seg_ctrln_id` is the CNN |
-| Meter hours and rates | Meter Policies | `qq7v-hds4` | Per space and day: hours, rate, time limit. No coordinates: placed through each row's `postid`, the meter's post ID in `8vzz-qzz9` |
-| Metered block sides | Blockfaces with Meters / Metered Street Blocks | `mk27-a5x2` / `27b3-yjjx` | To draw meters as block sides, not dots |
-| How many spaces | On-Street Parking Census | `9ivs-nf5y` | Supply per CNN (2024) |
-| Garages and lots | SFMTA Managed Off-street Parking; Off-street parking map | `vqzx-t7c4`; `fuhz-9thv` | Capacity, hours |
-| Accessible spaces | Blue Curb Spaces | `g69s-9jxr` | |
-| Temporary no-parking | Parking Signs / Street Space Permits | `sftu-nd43` | Construction no-parking with dates, hours, side and CNN; daily. Photos in `pigs-fac7`, matched by permit number |
-| Closures | Temporary Street Closures; Temp Street Closure Intersections | `8x25-yybr`; `7p5y-sxmu` | Events and construction |
-| Red lanes | Transit Only Lanes | `tzh6-6j82` | When the curb lane is off limits |
+**Driving:** nothing planned now. Could add later: On-Street Parking Census (`9ivs-nf5y`, spaces per CNN, 2024), Blue
+Curb Spaces (`g69s-9jxr`), Transit Only Lanes (`tzh6-6j82`), and the photos of posted temporary signs (`pigs-fac7`).
 
 **Walking: what's built to protect people** (dropped 2026-09-26, with the "Crosswalks & signals" and "Speed limits"
 layers; kept here in case it comes back)
@@ -103,6 +105,10 @@ already marks fatal crashes), Pavement Condition (`5aye-4rtt`), Street Tree Inve
 |---|---|---|
 | Law Enforcement Dispatched Calls for Service: Real-Time | `gnap-fj3t` | Only ~3.8k calls from the last year, as they happen; the Closed file (`2zdj-bwza`, in use) has them all |
 | SFMTA Enforced Temporary Tow Zones | `6r5h-j298` | 155k rows, most without a status, end dates into the 2040s; `sftu-nd43` instead |
+| Street Signs | `m48z-6ji4` | The posted signs' legends; the rules come from the sweeping schedule, meters and regulations instead |
+| Blockfaces with Meters; Metered Street Blocks | `mk27-a5x2`; `27b3-yjjx` | Meters are placed on their side by position instead |
+| Temp Street Closure Intersections | `7p5y-sxmu` | The closures' street segments (`8x25-yybr`) are enough for parking |
+| SFMTA - Off-Street Parking Locations | `mizu-nf6z` | Last updated 2018; `vqzx-t7c4` is current |
 | List of Streets and Intersections | `pu5n-qu5c` | The centerlines already carry names and cross streets |
 | Street Intersections; Street Nodes | `gmfx-8h6i`; `vd6w-dq8r` | Corners are placed from the centerline ends instead |
 | Fire Incidents | `wr8u-xric` | Building, vehicle and outdoor fires: not about walking on the street |
@@ -115,8 +121,10 @@ Some links are maps or charts of another dataset, so the dataset behind them is 
 | `icnu-39tp` | `8ar7-det4`, itself a view of `uzmr-g2uc` | In use through `uzmr-g2uc` |
 | `jq29-s5wp`, `pbh9-m8j2` | `wg3w-h783` | In use through `wg3w-h783` |
 | `q6vq-c5yf` (Narcan chart) | `wg3w-h783`, code 51050 | In use through `wg3w-h783` |
-| `qbyz-te2i` | `hi6h-neyh` | Planned through `hi6h-neyh` |
-| `nb2q-m4if` | `v9cz-kk5i`, a filtered view of `8x25-yybr` | Planned through `8x25-yybr` |
+| `qbyz-te2i` | `hi6h-neyh` | In use through `hi6h-neyh` |
+| `nb2q-m4if` | `v9cz-kk5i`, a filtered view of `8x25-yybr` | In use through `8x25-yybr` |
+| `fuhz-9thv` | `vqzx-t7c4` | In use through `vqzx-t7c4` |
 
 The Transportation category alone has no crash data; the walking side needs the Public Safety and Health categories.
+The street-cleaning schedule is under City Infrastructure.
 To list a category, use `data.sf.gov/api/views.json?category=…`; the Socrata catalog API lists only 5 SF datasets.
