@@ -58,7 +58,7 @@ DATASETS = {
 }
 
 # citywide totals per year -> (dataset id, SoQL select, filter). The police kinds match analyze_sf.py's: reports about
-# people (robbery, violence, pickpocketing, weapons) and about drugs (drug offenses, naloxone given); a report counts once.
+# people (robbery, violence, pickpocketing, weapons) and drug offenses; a report counts once.
 PER_YEAR = "date_extract_y({}) as y, count(distinct incident_number) as n"
 TRENDS = {
     "hit": ("ubvf-ztfx", "date_extract_y(collision_date) as y, count(*) as n, sum(number_killed) as killed", PED),
@@ -66,7 +66,7 @@ TRENDS = {
                "incident_category in ('Robbery','Assault','Homicide','Rape','Sex Offense')"
                " OR starts_with(incident_category, 'Human Trafficking') OR starts_with(incident_category, 'Weapons')"
                " OR incident_subcategory in ('Larceny Theft - Pickpocket','Larceny Theft - Purse Snatch')"),
-    "drugs": ("wg3w-h783", PER_YEAR.format("incident_date"), "starts_with(incident_category, 'Drug') OR incident_code='51050'"),
+    "drugs": ("wg3w-h783", PER_YEAR.format("incident_date"), "starts_with(incident_category, 'Drug')"),
 }
 
 

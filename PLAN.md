@@ -4,8 +4,8 @@ Working title. A map of San Francisco in the style of [LA Street Rules](https://
 but the page changes with who's asking:
 
 - **I'm driving** → *Can I park here, until when, and what gets ticketed on this block?*
-- **I'm walking** → *How often are people walking hit by cars here, when and why, what gets reported to police at its
-  corners, and what's built to protect them?*
+- **I'm walking** → *Around a spot I pick, what gets reported to police, what do people call police about, and how
+  often are people walking hit by cars, when and why?*
 
 Same map, same search box, same "pick a block" card, but different layers, legend, time control, card contents
 and method text for each mode. The mode lives in the URL (`#drive` / `#walk`) so either view can be linked.
@@ -55,9 +55,9 @@ images.
 mast            SF Streets · (sister sites)                       Updated weekly · About
 h1 + lede       changes with mode
 MODE SWITCH     [ 🚗 I'm driving ]  [ 🚶 I'm walking ]
-find bar        Show blocks near me · search street / address / neighborhood
+find bar        drive: Show blocks near me · walk: Show what's around me · search street / address / neighborhood
 time control    drive: When [Now | pick day+time]  For [1h 2h 4h overnight]
-                walk:  When [Any | Daylight | After dark]
+                walk:  When [Any | Daylight | After dark]  Within [100–500 m slider, 200 m to start]
 ┌───────────────── map ─────────────────┐ ┌──────── card ────────┐
 │ layer chips (per mode)                │ │ block name, eyebrow  │
 │ OSM tiles + block lines               │ │ cards (per mode)     │
@@ -65,8 +65,9 @@ time control    drive: When [Now | pick day+time]  For [1h 2h 4h overnight]
 └───────────────────────────────────────┘ └──────────────────────┘
 legend (per mode)
 explainer section  drive: SF street cleaning & RPP in one example
-                   walk: summary of the city as a whole (built): when, where (around 24 places visitors go,
-                   neighborhoods, corners), how, and totals per year
+                   walk: summary of the city as a whole (built): when (people hit and reports of violence and
+                   robbery, by month and by hour), where (200 m around 24 places visitors go, neighborhoods,
+                   corners), how, and totals per year
 method             data + limits, per mode
 about · disclaimer
 ```
@@ -98,32 +99,48 @@ SFMTA:
   6am 9am noon 3pm 6pm 9pm 12am" (every 6 hours under 340px, like the walking card's hour chart), and "Each dot is about
   N tickets, stacked by the half hour" under it.
 
-**Walking card** (built, except 4)
+**Walking card** (built; Citina, 2026-09-26)
 
-1. **Pedestrians hit here** — on the block and at its two corners, two years: how many, how many badly hurt or killed,
-   on the High Injury Network or not; what time of day they were hit, how many after dark, and the top causes.
-2. **Reported to police at its corners** — robbery, violence, pickpocketing, weapons, drugs, naloxone; how the block's
-   corners rank citywide.
-3. **Calls to police at its corners** — calls from the public about fights and assaults, a gun or knife, robbery, threats
-   and harassment; how the block's corners rank citywide.
-4. **What's built here** — signal, continental crosswalk, painted safety zone, stop signs, speed limit, school zone, slow
-   street, traffic calming.
+The walking side counts what's in a circle, not on a block: 100 to 500 m (the "Within" slider, 200 m to start) around a
+spot you tap on the map, a searched address (the middle of its block), your location, or a place or corner in the
+summary. The circle is drawn on top of the map; letting go of the slider fits it in view. The link carries the spot and
+size (`#walk/@37.76411,-122.42181/250m`) but never your own location; old block links open a circle around that block.
+The card's top line gives the distance ("Within 250 m ~ 800 ft ~ 3-minute walk"), the title the nearest intersection on
+the spot's street, then the neighborhood. Every rank compares the circle with one the same size around each of the
+city's 7,550 intersections (`circle_q` in the summary, per size).
+
+1. **Reported to police** — robbery, assault and other violence, pickpocketing, weapons, drug offenses, most first; tap a
+   kind for what it covers and, with 10 or more, its half-hour dot chart (as LA's ticket kinds); ranks for violence and
+   robbery and for drug offenses; an hour chart (violence and robbery under drug offenses) and how many after dark.
+2. **Calls to police** — fights and assaults, a gun or knife, robbery, threats and harassment, the same way.
+3. **Pedestrians hit** — how many, how many badly hurt or killed by a car, the High Injury Network streets that pass
+   through the circle (with a "?" to its explanation), the rank, the hour chart, after dark, and the top causes in plain
+   words.
+
+Dropped (2026-09-26): "What's built here" (signals, crosswalks, speed limits, school zones, traffic calming).
 
 **Map layers**
 
 - Drive: speed and red-light cameras (built, default) · car break-ins (built) · blocks shaded by tickets per month ·
   street cleaning at the chosen time · meters · garages · closures.
-- Walk: High Injury Network (thick lines) · pedestrians hit (dots, severe ringed) · violence and robbery (discs) · drugs
-  and overdoses (squares) · calls to police (blue rings), all built and on by default, with neighborhoods shaded by violence and robbery per km of street
-  while the whole city shows · crosswalks & signals · speed limits.
+- Walk: High Injury Network (thick lines) · violence and robbery (discs) · drug offenses (squares) · calls to police
+  (blue rings), all built and on by default, with neighborhoods shaded by violence and robbery per km of street while
+  the whole city shows, and the card's circle on top. The legend explains the High Injury Network with a "?" link to the
+  note under the map, not in the legend itself. Dropped (2026-09-26): pedestrian crash dots (on the card instead),
+  crosswalks & signals, speed limits.
 
 **Wording rules** (Citina, with the ticket-clock restyle)
 
 - Never claim 100% unless it's literally 100% (block ranks are rounded down, so they never say "more than 100%").
 - Labels say literally what they mean ("no street-cleaning schedule found", not "no sweeping").
 - No "safe time" or "safe street" claims.
-- Privacy lines promise only what the page itself does. "Show blocks near me" only centers the map; if the page ever
-  queries data.sf.gov for the visible area (§4), recheck that line and the method note.
+- Privacy lines promise only what the page itself does. "Show blocks near me" only centers the map; "Show what's around
+  me" also puts the circle there, worked out in the browser and kept out of the link. If the page ever queries
+  data.sf.gov for the visible area (§4), recheck those lines and the method note.
+- A term the reader meets is explained where it's used, or linked with a "?" to where it is (the High Injury Network,
+  "after dark"); names like "High Injury Network" are the city's own, and the page says so.
+- No text that means nothing to readers: no dataset IDs, CNN numbers or internal codes on the page. Datasets named in the
+  method are linked.
 
 ---
 
@@ -141,8 +158,9 @@ hoods.py         docs/hoods.json (committed)  Analysis Neighborhoods j2bu-swwd o
 **Per block side (drive):** sweeping rows, regulation rows (time limit, RPP, hours), meter spaces + policies, ticket
 kinds (count, median fine, half‑hour histogram), share of posted cleaning days with a ticket, supply.
 
-**Per segment/intersection (walk):** pedestrian crashes (2 yrs, with severity, hour, daylight or dark, cause), HIN flag,
-police reports per kind at each corner (daylight and dark) with citywide ranks; still to come: protections, speed limit.
+**Per corner and crash (walk):** pedestrian crashes (2 yrs, with position, severity, hour, daylight or dark, cause), HIN
+flag per segment, police reports per kind and calls per group at each corner (daylight and dark, and the half hour of
+each); the page adds up what's in the circle. The circle's ranks come from `circle_q` (per size, 100–500 m).
 
 **"Can I park here at time T"** runs in the page, from the rule rows in the cell file, so any day and time works
 without precomputing.
@@ -160,7 +178,7 @@ data.sf.gov.
   `docs/hoods.json`); search over neighborhoods and, until milestone 2, a placeholder list of ~80 major streets (now replaced by every street).
 - [ ] **2. Driving data** — fetch + analyze centerlines *(done: blocks on the map, search, block links)*, sweeping, regulations, meters + policies, citations (2 yrs), garages; block card cards 2–4 and 6.
 - [ ] **3. Can I park here?** — time control + rules evaluator; map recolors by chosen time.
-- [ ] **4. Walking data** — *(done: pedestrian crashes, HIN, police reports and naloxone at corners, 2 yrs, daylight/dark, neighborhood shading, card, the citywide summary)*; calls to police from the public at corners (`2zdj-bwza`); still to do: protections, speed limits.
+- [x] **4. Walking data** — pedestrian crashes, HIN, police reports and calls to police (`2zdj-bwza`) at corners, 2 yrs, daylight/dark, neighborhood shading, the card as a circle around a spot, the citywide summary. Protections and speed limits dropped (2026-09-26).
 - [x] **4a. Cameras** — speed (`d5uh-bk84`) and red-light (`uzmr-g2uc`) cameras on the driving map; car break-ins at corners.
 - [x] **4b. Styles** — ticket-clock `9204808`'s type sizes, find bar, closed method rows, red location dot, tooltips,
   About cards (§1).
@@ -183,6 +201,8 @@ data.sf.gov.
    **Decided (Citina, 2026-09-25):** include police reports on the walking side, and naloxone (overdose) reports, from the
    last two years; walking is now the focus. Built as corner counts by kind, shown as map layers (violence and robbery;
    drugs and overdoses) and on the card with a citywide rank, with the reporting and patrol caveat in the card and method.
+   **Changed (Citina, 2026-09-26):** naloxone reports dropped (303 in two years, filed as non-criminal, a small slice of
+   overdoses); the layer is now "Drug offenses".
 3. **Publish.** Public at `citina/sf-streets` (2026-09-25), on GitHub Pages with weekly data (2026-09-26). Still open:
    list it as a sister site on the ticket-clock pages?
 4. **Map in dark mode.** Kept light, as on LA Street Rules; revisit only if LA changes.

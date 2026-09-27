@@ -17,15 +17,15 @@ the exception: data.sf.gov counts them for every full year (pedestrians hit sinc
 |---|---|---|---|
 | Streets – Active and Retired | `3psu-pn9h` | Every block on the map (15,142), its name (street + hundred block, from the address ranges), cross streets, odd/even side, its neighborhood (the row's `analysis_neighborhood`), and its two corners (node CNNs). Street search (`streets.json`). | Active segments in the street, park and pedestrian-path layers. Left out: freeways and ramps (class 1 and 6), names with RAMP or PARKING LOT. Corner positions are the median of the segment ends that meet there (0.4 m median from where SFPD places reports) |
 | Analysis Neighborhoods | `j2bu-swwd` | Neighborhood outlines on the city-wide map, neighborhood search, the tag naming the one in view, the walking map's shading | 41 neighborhoods, simplified to ~2 m; committed as `docs/hoods.json` |
-| Traffic Crashes Resulting in Injury | `ubvf-ztfx` | Walking: "Pedestrians hit" dots (ringed when badly hurt or killed), the card's counts, time-of-day chart, after-dark count and main causes; pedestrians hit per neighborhood. The walking summary: by month and hour, what they were doing (`ped_action`), causes, around 24 places, the corners with the most, and totals per year since 2015 | Only crashes with a pedestrian (`type_of_collision` or `mviw`, and `ped_action` not "No Pedestrian Involved"). 1,213 in the window, 39 fatal (13.6k since 2005; every crash has an intersection CNN, about half a segment CNN; runs ~2 months behind). Mid-block crashes count for the block, the rest for the intersection. Cause is `vz_pcf_description` in plainer words |
-| 2024 High Injury Network | `enwt-3u8m` | Walking: the red High Injury Network lines, the card's "High Injury Network: Yes/No" | Vision Zero's list: ~13% of streets, where the severe and fatal injuries of 2020–24 concentrate. 4,928 of its 5,917 segments (`cnn_sgmt_pkey`) are blocks on the map; the rest are freeways and ramps |
-| Police Department Incident Reports: 2018 to Present | `wg3w-h783` | Walking: "Violence & robbery" and "Drugs & overdoses" dots at corners, the card's counts per kind and citywide rank, the neighborhood shading, and the walking summary (reports by hour, around 24 places, totals per year since 2018). Driving: "Car break-ins" | ~99k reports a year, 96% placed at a corner. Seven kinds (below): 40,896 reports at 5,050 corners. Each report counts once per kind. SFPD places each at a nearby corner (`cnn`); the set of corners changed on 2024-04-24, which is why the window is two years |
-| Law Enforcement Dispatched Calls for Service: Closed | `2zdj-bwza` | Walking: "Calls to police" rings at corners, and the card's calls per group with a citywide rank | Calls from the public only (`onview_flag` N; a third of all calls are officers' own stops, which show where police patrol). Four groups (`CALL_GROUPS` in `fetch_sf.py`, below): 110,724 calls at 5,718 corners. Each call is placed at a nearby intersection (`intersection_id`, the same node CNN as the police reports' corners); sensitive calls have no place. Calls aren't checked: for these types, a third ended with no one there when police arrived and 12% in a written report |
+| Traffic Crashes Resulting in Injury | `ubvf-ztfx` | Walking: the card's "Pedestrians hit" (how many in the circle, badly hurt or killed, the rank among intersections, time of day, after dark, main causes; not drawn on the map since 2026-09-26); pedestrians hit per neighborhood. The walking summary: by month and hour, what they were doing (`ped_action`), causes, around 24 places, the corners with the most, and totals per year since 2015 | Only crashes with a pedestrian (`type_of_collision` or `mviw`, and `ped_action` not "No Pedestrian Involved"). 1,213 in the window, 39 fatal (13.6k since 2005; every crash has an intersection CNN, about half a segment CNN; runs ~2 months behind). Mid-block crashes count for the block, the rest for the intersection. Cause is `vz_pcf_description` in plainer words (`CAUSE` in `analyze_sf.py`: every cause behind two or more crashes in the window) |
+| 2024 High Injury Network | `enwt-3u8m` | Walking: the High Injury Network lines, the card's list of its streets that pass through the circle, and its share of the streets and of people walking hit (under the map) | The Department of Public Health's list for Vision Zero: corridors of one street at least a quarter mile long with 10 or more people killed or badly hurt per mile in 2020–24 (police reports matched with hospital and ambulance records), all road users. 1,438 blocks, 8% of the street length on the map, yet 49% of the people walking hit in the window were on it or at its corners. 4,928 of its 5,917 segments (`cnn_sgmt_pkey`) are blocks on the map; the rest are freeways and ramps |
+| Police Department Incident Reports: 2018 to Present | `wg3w-h783` | Walking: "Violence & robbery" and "Drug offenses" dots at corners, the card's counts per kind (with the half hour of each, for its charts) and rank, the neighborhood shading, and the walking summary (reports by hour and by month, around 24 places, totals per year since 2018). Driving: "Car break-ins" | ~99k reports a year, 96% placed at a corner. Six kinds (below): 40,593 reports at 5,048 corners. Each report counts once per kind. SFPD places each at a nearby corner (`cnn`); the set of corners changed on 2024-04-24, which is why the window is two years |
+| Law Enforcement Dispatched Calls for Service: Closed | `2zdj-bwza` | Walking: "Calls to police" rings at corners, and the card's calls per group (with the half hour of each, for its charts) and rank | Calls from the public only (`onview_flag` N; a third of all calls are officers' own stops, which show where police patrol). Four groups (`CALL_GROUPS` in `fetch_sf.py`, below): 110,724 calls at 5,718 corners. Each call is placed at a nearby intersection (`intersection_id`, the same node CNN as the police reports' corners); sensitive calls have no place. Calls aren't checked: for these types, a third ended with no one there when police arrived and 12% in a written report |
 | Automated Speed Enforcement Citations | `d5uh-bk84` | Driving: 56 speed-camera markers with the posted limit, tickets and warnings; "Cameras near here" on the card | Daily counts per site, summed over the window (the cameras started in April 2025; the data runs about 3 months behind) |
 | Red Light Camera Citations | `uzmr-g2uc` | Driving: 13 red-light camera markers with tickets per intersection; "Cameras near here" on the card | Monthly counts per intersection and direction |
 | OpenStreetMap tiles *(not DataSF)* | — | The map images | Loaded by the reader's browser from tile.openstreetmap.org, only for the part of the map on screen |
 
-**The seven police kinds** (`KINDS` in `analyze_sf.py`):
+**The six police kinds** (`KINDS` in `analyze_sf.py`):
 
 | Kind | From | Layer |
 |---|---|---|
@@ -33,8 +33,7 @@ the exception: data.sf.gov counts them for every full year (pedestrians hit sinc
 | Assault and other violence | categories Assault, Homicide, Rape, Sex Offense, Human Trafficking | Violence & robbery |
 | Pickpocketing and purse snatching | subcategories Larceny Theft - Pickpocket, - Purse Snatch | Violence & robbery |
 | Weapons | categories starting "Weapons" | Violence & robbery |
-| Drug offenses | categories starting "Drug" | Drugs & overdoses |
-| Naloxone given for an overdose | incident code 51050 | Drugs & overdoses |
+| Drug offenses | categories starting "Drug" | Drug offenses |
 | Car break-ins | subcategories Larceny - From Vehicle, Theft From Vehicle, Larceny - Auto Parts | Car break-ins (driving) |
 
 **The four call groups** (by `call_type_final`, the type dispatch closed the call as):
@@ -48,7 +47,8 @@ the exception: data.sf.gov counts them for every full year (pedestrians hit sinc
 
 ### Left out of the datasets in use
 
-- **Police reports:** every other category. The largest in the 28 months fetched: other larceny theft (31k rows),
+- **Police reports:** naloxone given for an overdose (incident code 51050, filed as Non-Criminal: 303 in two years,
+  only 4 of them also drug offenses; dropped 2026-09-26 as too small a slice of overdoses), and every other category. The largest in the 28 months fetched: other larceny theft (31k rows),
   other miscellaneous (17k), malicious mischief (15k), warrants (14k), burglary (11k), motor vehicle theft (11k),
   non-criminal (9k), lost property, fraud, recovered vehicles, missing persons, disorderly conduct. Also reports with no
   corner, and supplements already counted.
@@ -82,7 +82,8 @@ the exception: data.sf.gov counts them for every full year (pedestrians hit sinc
 | Closures | Temporary Street Closures; Temp Street Closure Intersections | `8x25-yybr`; `7p5y-sxmu` | Events and construction |
 | Red lanes | Transit Only Lanes | `tzh6-6j82` | When the curb lane is off limits |
 
-**Walking** (the rest of milestone 4: what's built to protect people)
+**Walking: what's built to protect people** (dropped 2026-09-26, with the "Crosswalks & signals" and "Speed limits"
+layers; kept here in case it comes back)
 
 | Use | Dataset | ID |
 |---|---|---|

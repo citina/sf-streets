@@ -4,9 +4,10 @@ A map of San Francisco that answers a different question depending on how you're
 
 - **I'm driving:** can I park on this block now, or at the time I pick, and what gets ticketed here? Street cleaning per
   side, meters and time limits, permit areas, and every kind of parking ticket written there.
-- **I'm walking:** how often have people walking here been hit by cars, when, and why, what gets reported to police at
-  its corners, and what's been built to protect them? Pedestrian injury crashes, the Vision Zero High Injury Network,
-  police reports of violence, robbery, drugs and overdoses, and (still to come) signals, crosswalks and speed limits.
+- **I'm walking:** within a distance you pick (100 to 500 m) of a spot on the map, an address or where you are, what
+  gets reported to police, what do people call police about, and how often have people walking been hit by cars, when
+  and why? Police reports of violence, robbery and drug offenses, calls to police, pedestrian injury crashes, and the
+  Vision Zero High Injury Network.
 
 All from [DataSF](https://data.sf.gov); [DATA_SOURCES.md](DATA_SOURCES.md) lists which dataset is used for what, and
 which were left out. A sister project to [LA Street Rules](https://citina.github.io/ticket-clock/streets/)
@@ -14,10 +15,12 @@ which were left out. A sister project to [LA Street Rules](https://citina.github
 data split into small map cells, rebuilt weekly. Live at **https://citina.github.io/sf-streets/**.
 
 **Status:** the map works, with DataSF's 41 Analysis Neighborhoods and all 15,142 blocks. Search finds any street, a
-house number on it, or a neighborhood, and a block can be linked (`#walk/13060000`). The walking side shows the last two
-years of pedestrian crashes, the High Injury Network, and police reports at corners (violence and robbery, drugs and
-naloxone given for overdoses) and calls to police from the public, by daylight or after dark, with neighborhoods shaded citywide, and a summary of the whole
-city: when and where people walking were hit, around the places visitors go, and totals per year. The driving side shows speed
+house number on it, or a neighborhood. A block can be linked on the driving side (`#drive/13060000`), and a spot and
+distance on the walking side (`#walk/@37.76411,-122.42181/250m`). The walking side counts the last two years of police
+reports (violence and robbery, drug offenses), calls to police and pedestrian crashes within the distance picked, by
+daylight or after dark, with times of day and ranks against every intersection; the map shows the High Injury Network,
+police reports and calls at corners, and neighborhoods shaded citywide. A summary covers the whole city: when and where
+people walking were hit and violence and robbery was reported, around the places visitors go, and totals per year. The driving side shows speed
 and red-light cameras and car break-ins; its parking rules and tickets come next. See [PLAN.md](PLAN.md).
 
 `hoods.py` writes `docs/hoods.json`, the neighborhood outlines. The file is committed, so run it again only if DataSF
