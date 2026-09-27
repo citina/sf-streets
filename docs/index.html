@@ -105,7 +105,7 @@
   .mode .m-sub{font-size:14px;line-height:1.3;color:var(--ink-2)}
   .mode[aria-pressed="true"]{background:var(--ink);color:var(--plane);border-color:var(--ink)}
   .mode[aria-pressed="true"] .m-sub{color:color-mix(in oklab,var(--plane) 75%,var(--ink))}
-  @media (max-width:420px){ .mode{grid-template-columns:1fr} .mode svg{grid-row:auto;width:26px;height:26px} .mode .m-sub{display:none} }
+  @media (max-width:420px){ .mode{grid-template-columns:24px 1fr;gap:0 8px;padding:10px 12px} .mode svg{grid-row:auto;width:24px;height:24px} .mode .m-sub{display:none} }
 
   /* ---------- controls ---------- */
   .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
@@ -132,6 +132,23 @@
           font:600 15px "Barlow",system-ui,sans-serif;padding:7px 14px;border-radius:8px;min-height:40px}
   .locbtn:disabled{opacity:.6;cursor:progress}
   .locbtn svg{width:16px;height:16px;flex:none}
+  .locbtn .short{display:none}
+  /* a phone: less above the map, so it starts on the first screen. The location button is its icon and "Near me", beside
+     the search box (its full name stays for screen readers), and the layers are one row that scrolls sideways */
+  @media (max-width:560px){
+    main{padding-top:16px}
+    h1{margin:14px 0 8px}
+    .mast .upd{display:none}
+    .locbtn{padding:0 10px;gap:6px}
+    .findbar{column-gap:8px}
+    .locbtn .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+    .locbtn .short{display:inline}
+    .findbar .searchbox{flex:1 1 0;min-width:0}
+    .chips.layers{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding:0 16px}
+    .chips.layers::-webkit-scrollbar{display:none}
+    .chips.layers>*{flex:none}
+    .chips.layers::after{content:"";flex:0 0 6px}
+  }
   .loc-note{font-size:14px;color:var(--ink-2);margin:8px 0 0}
   .searchbox{position:relative;flex:1 1 260px;max-width:420px}
   .searchbox>svg{position:absolute;left:11px;top:12px;width:16px;height:16px;color:var(--ink-2);pointer-events:none}
@@ -237,6 +254,17 @@
   /* the posted cleaning time behind a street-cleaning ticket chart; mixed from ink so it holds up in dark mode */
   .win{fill:color-mix(in oklab, var(--ink) 10%, var(--surface))}
   .sw.win{background:color-mix(in oklab, var(--ink) 10%, var(--surface))}
+  /* the driving card after "Can I park here?": a row per part, closed until tapped, with its short answer under its name */
+  .card.fold{padding:12px 0;margin-top:0}
+  .card:not(.fold) + .card.fold{margin-top:14px}
+  .fold>summary{cursor:pointer;list-style:none;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:baseline}
+  .fold>summary::-webkit-details-marker{display:none}
+  .fold>summary::after{content:"+";grid-column:2;grid-row:1;color:var(--ink-2);font-size:18px;line-height:1}
+  .fold[open]>summary::after{content:"−"}
+  .fold>summary h4{margin:0}
+  .fold .peek{grid-column:1;font-size:15px;line-height:1.4;color:var(--ink-2)}
+  .fold[open]>summary{margin-bottom:12px}
+  .fold[open] .peek{display:none}
   .card-end{font-size:14px;line-height:1.5;color:var(--ink-2);margin:4px 0 14px;padding-top:12px;border-top:1px solid var(--rule)}
   .ctl-row input[type=datetime-local]:invalid{border-color:var(--park-no)}
   /* each side of a block on the driving map: its own line, colored by whether you can park there */
@@ -250,6 +278,8 @@
   .glance>div{background:var(--well);border-radius:8px;padding:10px 12px}
   .glance .v{display:block;font:700 28px/1 "Barlow Condensed","Barlow",sans-serif;color:var(--ink)}
   .glance .k{display:block;font-size:14px;line-height:1.4;color:var(--ink-2);margin-top:4px}
+  .glance.inline .v,.glance.inline .k{display:inline}
+  .glance.inline .k{margin-left:2px;font-size:15px}
   .kchart-t{font-size:14px;font-weight:600;margin:12px 0 6px}
   .hours{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;height:36px;align-items:end;margin:0 0 2px}
   .hours i{display:flex;flex-direction:column-reverse;overflow:hidden;background:var(--edge);border-radius:2px 2px 0 0}
@@ -366,12 +396,12 @@
 
 <body data-mode="drive">
 <main>
-  <nav class="mast" aria-label="Sister sites"><span><a class="site" href="https://citina.github.io/ticket-clock/streets/">LA Street Rules</a> · <span class="site here" aria-current="page">SF Streets</span></span><span><span>Updated weekly</span> · <a href="#about">About</a></span></nav>
+  <nav class="mast" aria-label="Sister sites"><span><a class="site" href="https://citina.github.io/ticket-clock/streets/">LA Street Rules</a> · <span class="site here" aria-current="page">SF Streets</span></span><span><span class="upd">Updated weekly · </span><a href="#about">About</a></span></nav>
 
   <div class="intro">
     <h1>SF Streets</h1>
-    <p class="lede" data-for="drive">Find a block in San Francisco to see whether you can park there right now or at a time you pick: street cleaning on each side, meters and time limits, permit areas, and every kind of ticket written there. <a href="#explain" id="sumLinkD" hidden>See the citywide summary</a></p>
-    <p class="lede" data-for="walk">Pick a spot in San Francisco to see how often people walking within <span class="rtxt">200 m</span> of it have been hit by cars and why, what gets reported to police there, and how that changes after dark. <a href="#explain" id="sumLink" hidden>See the citywide summary</a></p>
+    <p class="lede" data-for="drive">Find a block in San Francisco to see if you can park there, now or later, and what gets ticketed. <a href="#explain" id="sumLinkD" hidden>See the citywide summary</a></p>
+    <p class="lede" data-for="walk">Pick a spot in San Francisco to see how often people walking nearby were hit by cars, and what gets reported to police there. <a href="#explain" id="sumLink" hidden>See the citywide summary</a></p>
   </div>
 
   <div class="modes" role="group" aria-label="How are you getting around?">
@@ -388,16 +418,14 @@
   <div class="explorer">
     <div class="mapcol">
       <div class="findbar">
-        <button class="locbtn" id="locBtn" aria-describedby="locNote locNoteW"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2" fill="currentColor"/><path d="M8 0v2.6M8 13.4V16M0 8h2.6M13.4 8H16" stroke="currentColor" stroke-width="1.6"/></svg><span data-for="drive">Show blocks near me</span><span data-for="walk">Show what's around me</span></button>
+        <button class="locbtn" id="locBtn"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2" fill="currentColor"/><path d="M8 0v2.6M8 13.4V16M0 8h2.6M13.4 8H16" stroke="currentColor" stroke-width="1.6"/></svg><span class="lbl" data-for="drive">Show blocks near me</span><span class="lbl" data-for="walk">Show what's around me</span><span class="short" aria-hidden="true">Near me</span></button>
         <div class="searchbox">
           <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.8" cy="6.8" r="5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m10.6 10.6 4.4 4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-          <input type="search" id="q" placeholder="Enter an address or neighborhood" autocomplete="off" spellcheck="false"
+          <input type="search" id="q" placeholder="Address or neighborhood" autocomplete="off" spellcheck="false"
                  role="combobox" aria-label="Enter a street, address or neighborhood" aria-expanded="false" aria-controls="sugg" aria-autocomplete="list">
           <ul class="sugg" id="sugg" role="listbox" hidden></ul>
         </div>
       </div>
-      <p class="loc-note" id="locNote" data-for="drive">“Show blocks near me” only centers the map. The page doesn't send or save your location.</p>
-      <p class="loc-note" id="locNoteW" data-for="walk">“Show what's around me” centers the map and counts what's within <span class="rtxt">200 m</span> of you, in your browser. The page doesn't send or save your location.</p>
       <div aria-live="polite"><p class="find-msg" id="findMsg"></p><div class="cands" id="cands"></div></div>
 
       <!-- when: driving asks when you'll park and for how long; walking asks day or night -->
@@ -414,7 +442,7 @@
           <button class="chip sm" aria-pressed="false" data-v="night">Overnight</button>
         </div>
       </div>
-      <p class="loc-note" data-for="drive">Times are San Francisco time. Overnight means until 8 am.</p>
+      <p class="loc-note" data-for="drive">Times are SF time; overnight means until 8 am.</p>
       <div class="ctl-row" data-for="walk">
         <div class="chips" data-group="when-walk"><span class="ctl-label">When</span>
           <button class="chip sm" aria-pressed="true" data-v="any">Any time</button>
@@ -424,7 +452,7 @@
         <div class="radius"><label class="ctl-label" for="rad">Within</label>
           <input type="range" id="rad" min="100" max="500" step="50" value="200"><output id="radOut" for="rad">200 m</output></div>
       </div>
-      <p class="loc-note" data-for="walk">After dark means from sunset to sunrise in San Francisco on that day; daylight, from sunrise to sunset.</p>
+      <p class="loc-note" data-for="walk">After dark means sunset to sunrise.</p>
 
       <!-- what the map draws -->
       <div class="chips layers" data-for="drive" data-multi><span class="ctl-label">Show</span>
@@ -432,7 +460,7 @@
         <button class="chip sm" aria-pressed="true" data-layer="cams">Speed &amp; red-light cameras</button>
         <button class="chip sm" aria-pressed="false" data-layer="cars">Car break-ins</button>
         <button class="chip sm" aria-pressed="true" data-layer="closures">Closures</button>
-        <button class="chip sm" aria-pressed="false" data-layer="garages">City garages &amp; lots</button>
+        <button class="chip sm" aria-pressed="false" data-layer="garages">City-run garages &amp; lots</button>
       </div>
       <div class="chips layers" data-for="walk" data-multi><span class="ctl-label">Show</span>
         <button class="chip sm" aria-pressed="true" data-layer="hin">High Injury Network</button>
@@ -452,11 +480,10 @@
     </div>
 
     <aside class="panel" id="panel" aria-live="polite">
-      <div class="p-eyebrow"><span data-for="drive">Block</span><span data-for="walk" id="pEyeW">Within 200 m</span></div>
+      <div class="p-eyebrow"><span data-for="walk" id="pEyeW">Within 200 m</span></div>
       <div class="p-title" id="pTitle">Pick a block</div>
       <div class="p-sub" id="pBetween" hidden></div>
       <div class="p-sub" id="pSub">Search above, or zoom in and tap a street on the map. Below is what the card will hold.</div>
-      <div class="p-sub" id="pTix" data-for="drive" hidden></div>
 
       <!-- driving: filled in for the block picked; the placeholders say what's there before one is picked -->
       <div data-for="drive" id="driveCards"></div>
@@ -601,7 +628,7 @@
         <p>Meters are SFMTA's <a href="https://data.sf.gov/d/8vzz-qzz9">parking meters</a> on the street that are in use, each placed on the side of the block it stands on, with its hours, rates and time limits from SFMTA's <a href="https://data.sf.gov/d/qq7v-hds4">meter policies</a> as they are this week (rates change with demand). A meter's cap color says what it's for: grey for anyone, green for a short stay, yellow and red for commercial loading, black for motorcycles. Time limits, residential permit areas, and no-parking, overnight and government-permit zones come from SFMTA's list of <a href="https://data.sf.gov/d/hi6h-neyh">parking regulations</a>, drawn as lines along the curb, and are placed on the block side they run along.</p></details>
       <details data-for="drive"><summary>Closures and temporary signs</summary>
         <p>SFMTA's list of <a href="https://data.sf.gov/d/8x25-yybr">temporary street closures</a> (special events, shared spaces and permitted work; not closures by Public Works or the police) and its permits for <a href="https://data.sf.gov/d/sftu-nd43">temporary no-parking signs</a>, mostly for construction. Both change every day, so the page loads them from data.sf.gov when you open it, for today and the next two weeks. A closure with all lanes closed means no parking on the block while it runs; one with some lanes closed, or signs along only part of a side, shows as a warning. A closure over several days with set hours counts as closed those hours each day. Many temporary signs, like those for moves, aren't in these lists.</p></details>
-      <details data-for="drive"><summary>City garages and lots</summary>
+      <details data-for="drive"><summary>City-run garages and lots</summary>
         <p>The <a href="https://data.sf.gov/d/vqzx-t7c4">garages and lots the city runs</a> (SFMTA, the Port and Recreation and Parks), at their main entrance, or by their address where the list has no entrance; 51 of the 58 can be placed. Privately run garages and lots aren't in the city's open data, and the list has no hours or rates.</p></details>
       <details data-for="drive"><summary>Tickets</summary>
         <p><a href="https://data.sf.gov/d/ab4h-6ztd">SFMTA parking citations</a> from the last two years, placed on a block by the address written on the ticket (the block whose house numbers include it) and on a side by whether the number is odd or even; tickets without a usable address go by their coordinates. The city adds the last few days late, so the two years end on the last day that looks complete. Muni fare and passenger conduct citations, which are in the same list, are left out. The fine shown for a kind is its median across the city in the last 90 days, since fines go up over time.</p></details>
@@ -958,15 +985,13 @@ function setRadius(r, keep){ if(!okRadius(r)) return; radius=r; showRadius();
   drawSpot(); legend(); if(mode()==='walk'){ renderSpot(); setHash(); } }
 $('#rad').addEventListener('input',()=>setRadius(+$('#rad').value,true));
 $('#rad').addEventListener('change',()=>{ if(spot&&mode()==='walk') centerOn(spot.x,spot.y,spotView()); });   // let go: the map fits the circle
-function renderPanel(){ drawHalo(); drawSpot(); if(mode()==='walk') renderSpot(); else renderBlock(selected); }
+function renderPanel(){ drawHalo(); drawSpot(); hoodTag(vb.w*PX_M<=SHOW_M); if(mode()==='walk') renderSpot(); else renderBlock(selected); }
 function renderBlock(b){
   $('#pTitle').textContent=b?blockName(b):'Pick a block';
   const bt=b&&[between(b),b.sd?`${b.sd===1?'odd':'even'}-numbered side only`:''].filter(Boolean).join(' · ');
   $('#pBetween').hidden=!bt; $('#pBetween').textContent=bt||'';
   $('#pSub').textContent=b?(b.nh!==undefined?META.hoods[b.nh]:''):'Search above, or zoom in and tap a street on the map. Below is what the card will hold.';
   $('#pSub').hidden=b&&b.nh===undefined;
-  const T=META&&META.tickets; $('#pTix').hidden=!b||!T||!b.sn;
-  if(b&&T) $('#pTix').textContent=b.tn?`${num(b.tn[0])} SFMTA ticket${b.tn[0]>1?'s':''} since ${fmtD(T.start)}`:`No SFMTA tickets since ${fmtD(T.start)}`;
   fillDrive(b);
 }
 // the circle's name (the nearest intersection) and neighborhood need the cells around it, so fillWalk fills them in
@@ -1199,7 +1224,7 @@ function sidesOf(b){ const has=s=>[b.w,b.rg,b.mt].some(l=>(l||[]).some(x=>x[0]==
   if(b.sd&&b.lp){ const own=b.lp===b.sd?0:1; return [0,1].filter(s=>s===own||has(s)); }
   return [0,1]; }
 const sideWord=(b,s)=>b.sn[s][0]+b.sn[s].slice(1).toLowerCase();
-const sideName=(b,s,long)=>`${sideWord(b,s)} side${b.lp?long?` (${(s?3-b.lp:b.lp)===1?'odd':'even'} numbers)`:` · ${(s?3-b.lp:b.lp)===1?'odd':'even'}`:''}`;
+const sideName=(b,s,long)=>`${sideWord(b,s)} side${b.lp?long?` (${(s?3-b.lp:b.lp)===1?'odd':'even'} house numbers)`:` · ${(s?3-b.lp:b.lp)===1?'odd':'even'}`:''}`;
 
 /* ---------- temporary changes: street closures (events, shared spaces, permitted work; 8x25-yybr) and permits for
    temporary no-parking signs (sftu-nd43). They change daily, so the page loads them from data.sf.gov itself, the whole
@@ -1327,18 +1352,19 @@ function verdictTxt(b, s, T, E){
   const part=spans(O.parts,dayStart(T,-1),E).filter(i=>i.s<+E&&i.e>+T).map(i=>` ${i.r.lead?`${i.r.lead}${i.r.why?' '+i.r.why:''}`:`${i.r.n?`${i.r.n} of the ${i.r.of} metered spaces`:'Part of this side'}: ${i.r.why}`} ${spanTxt(i)}${i.r.after?`, ${i.r.after}`:''}.`)
     .filter((x,k,a)=>a.indexOf(x)===k).join('');
   const permit=r=>r&&r.areas?`, unless you have an area ${r.areas.replace(/,/g,' or ')} permit`:'';
-  const atTxt=a=>!a?'':a.max?'72 hours is the longest a car can stay in one spot':a.limit?`${a.r.k==='pay'?'The meter\'s':'The'} ${hrs(a.lim)} limit${a.r.k==='limit'?` (${dayText(a.r.days)} ${hoursTxt(a.r.t0,a.r.t1)})`:''} runs out${permit(a.r)}`
-    :`${a.r.why} ${spanTxt(a)}`;
+  // what stops you, and when; bare: the big line already gave its day and start, so only the hours
+  const atTxt=(a,bare)=>!a?'':a.max?'72 hours is the longest a car can stay in one spot':a.limit?`${a.r.k==='pay'?'The meter\'s':'The'} ${hrs(a.lim)} limit${a.r.k==='limit'?` (${dayText(a.r.days)} ${hoursTxt(a.r.t0,a.r.t1)})`:''} runs out${permit(a.r)}`
+    :`${a.r.why} ${bare?fmtRange(new Date(a.s).getHours()*60+new Date(a.s).getMinutes(),(new Date(a.e).getHours()*60+new Date(a.e).getMinutes())||1440):spanTxt(a)}`;
   if(v.st==='no') return ['no',v.at.r.any?'No parking':'No parking now',v.at.r.any?'No parking any time on this side.':`${lead(`${v.at.r.why} until ${fmtAt(v.until)}`)}.${part}`];
   const pay=v.pays&&v.pays.length?(v.cost===null?'pay at the pay station or show an area permit':v.cost?`about ${money(Math.round(v.cost/5)*5)} at the meter`:'pay the meter'):'';
-  if(v.st==='move') return ['move',`Move by ${fmtAt(v.by)}`,`${lead(atTxt(v.at))}.${pay?` Before then, ${pay}.`:''}${part}`];
+  if(v.st==='move') return ['move',`Move by ${fmtAt(v.by)}`,`${lead(atTxt(v.at,v.at.s===v.by))}.${pay?` Before then, ${pay}.`:''}${part}`];
   if(v.st==='pay'){ const first=v.pays[0], last=v.pays[v.pays.length-1], lim=v.pays.find(i=>i.r.lim);
     const rate=first.r.rate===last.r.rate?`${money(first.r.rate)} an hour`:`${money(first.r.rate)} an hour, then ${money(last.r.rate)}`;
     return ['pay',v.cost===null?'Pay or permit':`Pay ${money(Math.round(v.cost/5)*5)}`,`${v.cost===null?`Pay or permit ${dayText(last.r.days)} ${hoursTxt(last.r.t0,last.r.t1)}${permit(last.r).replace(', unless you have',': or show')}`
       :`${at?at+', ':''}${rate}${lim?`, ${hrs(lim.r.lim)} limit`:''}. Meters run until ${fmtAt(v.paidTo)}`}.${part}`]; }
   const until=v.free>=+T+MAXSTAY?'Free, up to 72 hours':`Free until ${fmtAt(v.free)}`;
   return ['ok',until,none?'No street cleaning, meter, time limit or permit area in the city\'s lists for this side.'
-    :(at?at+'. ':'')+(v.freeAt&&!v.freeAt.max?(v.freeAt.r.k==='pay'?`Then meters${v.freeAt.r.rate?`, ${money(v.freeAt.r.rate)} an hour`:''}.`:`Then ${atTxt(v.freeAt).replace(/^./,c=>c.toLowerCase())}.`):'72 hours is the longest a car can stay in one spot.')+part]; }
+    :(at?at+'. ':'')+(v.freeAt&&!v.freeAt.max?(v.freeAt.r.k==='pay'?`Then meters${v.freeAt.r.rate?`, ${money(v.freeAt.r.rate)} an hour`:''}.`:`Then ${atTxt(v.freeAt,v.freeAt.s===v.free).replace(/^./,c=>c.toLowerCase())}.`):'72 hours is the longest a car can stay in one spot.')+part]; }
 
 // the parts of the card that change with the time and stay picked
 function fillDriveTime(b){ const host=$('#dVerdict'); if(!host||host.dataset.id!==String(b.id)) return;
@@ -1397,7 +1423,7 @@ const usualTxt=r=>r.map(([a,z])=>fmtRange(a,z).replace(/ /g,' ').replace('–',
 const openTix=new Set(); let openTixFor=null;
 function ticketKinds(host, b){ const tk=b.tk||[], hh=new Map((b.hh||[]).map(h=>[h[0],h])), mx=tk.length?tk[0][1]:1, FEW=5, extra=[];
   if(openTixFor!==b.id){ openTix.clear(); openTixFor=b.id; }
-  H('div',{className:'sm-note',style:'margin:0 0 6px',textContent:`Tap a kind for what it means and, with ${META.tickets.chart_min} or more, when it gets ticketed here.`},host);
+  H('div',{className:'sm-note',style:'margin:0 0 6px',textContent:'Tap a kind for what it means and when it gets ticketed here.'},host);
   const g=H('div',{className:'kinds'},host);
   tk.forEach(([k,n,dow,usual,wk],i)=>{ const fine=META.tickets.fines[k], row=H('button',{className:'krow',type:'button'},g), a=H('div',{},row);
     H('div',{className:'nm',textContent:META.tickets.kinds[k]},a);
@@ -1415,7 +1441,10 @@ function ticketKinds(host, b){ const tk=b.tk||[], hh=new Map((b.hh||[]).map(h=>[
       more.textContent=open?'Show fewer':`Show all ${tk.length} kinds`; more.setAttribute('aria-expanded',String(open)); };
     more.onclick=()=>{ open=!open; set(); if(!open&&more.getBoundingClientRect().top<0) more.scrollIntoView({block:'center'}); }; set(); } }
 
-// the closures and temporary no-parking signs listed for a block in the next two weeks
+// the closures and temporary no-parking signs listed for a block in the next two weeks, and a short answer for its row
+function tempPeek(b){ if(tempState!=='ok') return tempState==='failed'?'Couldn\'t load today\'s list':'Loading today\'s list…';
+  const now=sfNow(), end=dayStart(now,TEMP_DAYS+1), n=(TEMP.get(b.id)||[]).filter(x=>x.to>+now&&x.from<+end).length;
+  return n?`${n} listed in the next two weeks`:'None listed in the next two weeks'; }
 function tempCard(b){
   if(tempState!=='ok') return tempState==='failed'?'<div class="rule-line">Couldn\'t load today\'s street closures and temporary no-parking signs from data.sf.gov. Read the posted signs.</div>'
     :'<div class="sm-note" style="margin-top:0">Loading today\'s list from data.sf.gov…</div>';
@@ -1429,10 +1458,13 @@ function tempCard(b){
     return [x.kind==='sign'?'var(--park-no)':'var(--closed)',what,when]; }).filter(([,w,t])=>!seen.has(w+t)&&seen.add(w+t));
   return (L.length?`<ul class="rules">${L.map(([c,t,d])=>`<li style="--c:${c}"><span>${esc(t)}<span class="sub">${esc(d)}</span></span></li>`).join('')}</ul>`
     :`<div class="rule-line">None listed for this block from today to ${shortDate(dayStart(now,TEMP_DAYS))}.</div>`)
-    +'<div class="evid">From SFMTA\'s list of temporary street closures (events, shared spaces and permitted work) and the permits for temporary no-parking signs, loaded from data.sf.gov when you opened the page. Not every temporary sign is in these lists.</div>'; }
+    +'<div class="evid">Loaded from <a href="https://data.sf.gov/">data.sf.gov</a> when you opened the page. Some temporary signs may not be listed.</div>'; }
 
-// the driving card: the block picked; car break-ins at its corners (which can sit in the next cell over) and cameras near it
+// the driving card: the block picked; car break-ins at its corners (which can sit in the next cell over) and cameras near it.
+// After "Can I park here?" each part is a row with its short answer, closed until tapped; the rows opened stay open for
+// the next block picked
 let driveReq=0;
+const openFolds=new Set();
 async function fillDrive(b){
   const dc=$('#driveCards'), req=++driveReq, ok=!!(b&&META&&META.tickets);   // data built before the parking rules has none
   $('#drivePh').hidden=ok;
@@ -1456,7 +1488,6 @@ async function fillDrive(b){
     clean+=`<div class="side"><div class="side-head"><div class="signs">${rs.map(r=>`<div>${signHTML(r)}</div>`).join('')}</div><div>
       <div class="side-name">${esc(sideName(b,s,true))}</div><div class="side-txt">${next.length?`Next: <b>${next.map(shortDate).join(' · ')}</b>`:''}</div></div></div>
       <div class="evid">${posted?`Tickets were written on ${pct(hitDays,posted)}% of this side's cleaning days in the past two years (${num(hitDays)} of ${num(posted)} days)${hit?`, ${num(hit)} in all`:''}.`:'No posted cleaning days in the past two years.'}</div></div>`; });
-  if(withW.length&&b.lp) clean+=`<div class="evid">Odd and even mean house numbers: one side of the street has the odd addresses, the other the even ones, and each side can have its own cleaning day.</div>`;
 
   // meters, time limits, permits
   const lines=sides.map(s=>[s,ruleLines(b,s)]), anyL=lines.some(([,l])=>l.length), mTix=(b.tk||[]).filter(t=>/^Meter/.test(TK.kinds[t[0]])).reduce((a,t)=>a+t[1],0);
@@ -1467,21 +1498,39 @@ async function fillDrive(b){
       +(lines.some(([,l])=>!l.length)&&!sameL?`<div class="evid">${esc(sideName(b,lines.find(([,l])=>!l.length)[0],true))}: nothing in these lists.</div>`:'');
 
   const gar=(META.garages||[]).map(g=>({g,m:Math.hypot(g[1]-O[0]-bx,g[2]-O[1]-by)*PX_M})).filter(o=>o.m<=800).sort((a,c)=>a.m-c.m).slice(0,3);
+  const m10=m=>`${Math.round(m/10)*10} m`;
+
+  // each row's short answer. Street cleaning: the next posted day on either side
+  const nextClean=withW.flatMap(s=>(b.w||[]).filter(w=>w[0]===s).map(w=>{ const r={k:'clean',days:w[1],t0:w[2],t1:w[3],weeks:w[4],hol:w[5]}; return {s,r,D:nextDays(r,1)[0]}; }))
+    .filter(x=>x.D).sort((a,c)=>a.D-c.D||a.r.t0-c.r.t0);
+  const nc=nextClean[0], ncSides=nc?[...new Set(nextClean.filter(x=>+x.D===+nc.D&&x.r.t0===nc.r.t0).map(x=>x.s))]:[];
+  const cleanPeek=!withW.length?'No schedule found':!nc?'None in the next ten weeks'
+    :`Next: ${dayAnd(dayWord(nc.D,sfNow()),hoursTxt(nc.r.t0,nc.r.t1))}${sides.length>1?`, ${ncSides.length>1?'both sides':sideWord(b,ncSides[0]).toLowerCase()+' side'}`:''}`;
+  // meters, time limits, permits: how many metered spaces, the time limits, the permit areas
+  const rg=b.rg||[], nMet=(b.mt||[]).reduce((a,m)=>a+m[2],0), lims=[...new Set(rg.filter(r=>r[1]===0).map(r=>r[5]))].sort((a,z)=>a-z);
+  const areas=[...new Set(rg.filter(r=>r[6]).flatMap(r=>String(r[6]).split(',')))].sort();
+  const ruleBits=[nMet?`${num(nMet)} metered space${nMet>1?'s':''}`:'',lims.length?`${listTxt(lims.map(hrs))} limit`:'',areas.length?`permit area ${listTxt(areas)}`:'',
+    rg.some(r=>r[1]===4)?'pay or permit':'',rg.some(r=>[1,2,3,5].includes(r[1]))?'no-parking zones':''].filter(Boolean).slice(0,3);
+  const rulePeek=ruleBits.length?ruleBits.join(' · ').replace(/^./,c=>c.toUpperCase()):'None in the city\'s lists';
+  const tixPeek=b.tk&&b.tk.length?`${num(b.tn?b.tn[0]:b.tk.reduce((a,t)=>a+t[1],0))} since ${since} · most: ${TK.kinds[b.tk[0][0]]}`:`None since ${since}`;
+  const fold=(k,title,peek,body)=>`<details class="card fold" data-k="${k}"${openFolds.has(k)?' open':''}><summary><h4>${title}</h4><span class="peek">${esc(peek)}</span></summary>${body}</details>`;
+
   dc.innerHTML=`<div class="card"><h4>Can I park here?</h4><div id="dVerdict" data-id="${b.id}"></div>
-      <div class="evid">From the city's lists of street cleaning, meters, time limits, permit areas, street closures and temporary no-parking signs. It can't see painted curbs without meters, driveways, hydrants, or temporary signs that aren't in those lists; read the posted signs.</div></div>
-    <div class="card"><h4>Street cleaning</h4>${clean}</div>
-    <div class="card"><h4>Meters, time limits, permits</h4>${rules}<div class="evid" id="dNow"></div></div>
-    <div class="card"><h4>Closures and temporary signs</h4><div id="dTemp">${tempCard(b)}</div></div>
-    <div class="card"><h4>Tickets written here</h4><div id="dTix"></div></div>
-    <div class="card"><h4>City garages &amp; lots nearby</h4>${gar.length?`<table class="ktab">${gar.map(({g,m})=>`<tr><td>${esc(g[0])}<span class="sm-note" style="display:block;margin:0">${g[3]?'Garage':'Lot'}${g[5]?`, ${num(g[5])} spaces`:''}</span></td><td class="n">${Math.round(m/10)*10} m</td></tr>`).join('')}</table>`
-      :'<div class="rule-line">No city-run garage or lot within 800 m.</div>'}<div class="evid">Only the garages and lots the city runs; privately run ones aren't in its open data.</div></div>
-    <div class="card"><h4>Car break-ins at its corners</h4><div class="glance" style="grid-template-columns:minmax(0,1fr)">
-      <div><span class="v">${num(cars)}</span><span class="k">Reported, ${range(P)}</span></div></div>
-      <div class="rank">${rankTxt(b,'cars','car break-ins')}</div></div>
-    <div class="card"><h4>Cameras near here</h4>${near.length?`<table class="ktab">${near.map(({c,m})=>`<tr><td>${esc(camName(c))}</td><td class="n">${Math.round(m/10)*10} m</td></tr>`).join('')}</table>`
-      :'<div class="rule-line">No speed or red-light cameras within 500 m.</div>'}</div>
+      <div class="evid">This may not include every rule. Always read the posted signs.</div></div>
+    ${fold('clean','Street cleaning',cleanPeek,clean)}
+    ${fold('rules','Meters, time limits, permits',rulePeek,`${rules}<div class="evid" id="dNow"></div>`)}
+    ${fold('temp','Closures and temporary signs',tempPeek(b),`<div id="dTemp">${tempCard(b)}</div>`)}
+    ${fold('tix','Tickets written here',tixPeek,'<div id="dTix"></div>')}
+    ${fold('gar','City-run garages &amp; lots nearby',gar.length?`${gar[0].g[0]}, ${m10(gar[0].m)}`:'None within 800 m',`${gar.length?`<table class="ktab">${gar.map(({g,m})=>`<tr><td>${esc(g[0])}<span class="sm-note" style="display:block;margin:0">${g[3]?'Garage':'Lot'}${g[5]?`, ${num(g[5])} spaces`:''}</span></td><td class="n">${m10(m)}</td></tr>`).join('')}</table>`
+      :'<div class="rule-line">No city-run garage or lot within 800 m.</div>'}`)}
+    ${fold('cars','Car break-ins at its corners',cars?`${num(cars)} reported in the past two years`:'None reported in the past two years',`<div class="glance inline" style="grid-template-columns:minmax(0,1fr)">
+      <div><span class="v">${num(cars)}</span> <span class="k">reported in the past two years</span></div></div>
+      <div class="rank">${rankTxt(b,'cars','car break-ins')}</div>`)}
+    ${fold('cams','Cameras near here',near.length?`${near.length} within 500 m, the nearest ${m10(near[0].m)} away`:'None within 500 m',near.length?`<table class="ktab">${near.map(({c,m})=>`<tr><td>${esc(camName(c))}</td><td class="n">${m10(m)}</td></tr>`).join('')}</table>`
+      :'<div class="rule-line">No speed or red-light cameras within 500 m.</div>')}
     <div class="card-end">This card is worked out from SFMTA citations recorded since ${since} and the city's lists of parking rules as of this week. Ticket history may not include every rule that applies here.</div>`;
   if(b.tk&&b.tk.length) ticketKinds($('#dTix'),b); else $('#dTix').innerHTML=`<div class="rule-line">No SFMTA tickets were written on this block since ${since}.</div>`;
+  dc.querySelectorAll('.fold').forEach(d=>d.addEventListener('toggle',()=>{ d.open?openFolds.add(d.dataset.k):openFolds.delete(d.dataset.k); }));
   fillDriveTime(b);
 }
 
@@ -1627,8 +1676,9 @@ function inHood(h, x, y){ const [x0,y0,x1,y1]=h.box; if(x<x0||x>x1||y<y0||y>y1) 
   h.rings.forEach(p=>{ for(let i=0,j=p.length-2;i<p.length;j=i,i+=2){ const yi=p[i+1], yj=p[j+1];
     if((yi>y)!==(yj>y) && x<(p[j]-p[i])*(y-yi)/(yj-yi)+p[i]) c=!c; } });
   return c; }
-function hoodTag(near){ const t=$('#hoodTag'), h=near&&HOODS&&HOODS.find(h=>inHood(h,vb.x+vb.w/2,vb.y+vb.h/2));
-  t.hidden=!h; if(h) t.textContent=h.name; }
+function hoodTag(near){ const t=$('#hoodTag'), h=near&&HOODS&&HOODS.find(h=>inHood(h,vb.x+vb.w/2,vb.y+vb.h/2)), walk=mode()==='walk';
+  const tap=near&&META&&!(walk?spot:selected);
+  t.hidden=!tap&&!h; t.textContent=tap?(walk?'Tap the map to pick a spot':'Tap a street to pick a block'):h?h.name:''; }
 function pickHood(i){ if(HOODS) HOODS.forEach((h,k)=>h.el.classList.toggle('on',k===i)); showBlocks(); }
 // walking, whole city: each neighborhood shaded by police reports of violence and robbery per km of street (log scale)
 const hoodStat=i=>META&&META.hood_stats&&META.hood_stats[META.hoods.indexOf(HOODS[i].name)];
@@ -1744,7 +1794,7 @@ function choose(o){
 $('#locBtn').addEventListener('click',()=>{
   const btn=$('#locBtn');
   if(!navigator.geolocation||!window.isSecureContext){ msg('This browser can\'t share a location with the page. Search for your street instead.'); return; }
-  btn.disabled=true; msg('Finding your location…'); $('#cands').innerHTML=''; q.value=''; clearStreet();
+  btn.disabled=true; msg(`Finding your location… ${mode()==='walk'?'The card will count what\'s around it, in your browser.':'It only centers the map.'} The page doesn't send or save your location.`); $('#cands').innerHTML=''; q.value=''; clearStreet();
   navigator.geolocation.getCurrentPosition(pos=>{
     btn.disabled=false; const {latitude:lat, longitude:lon}=pos.coords;
     if(lat<SF[1]||lat>SF[3]||lon<SF[0]||lon>SF[2]){ fix=null; drawYou(); legend();
@@ -1902,28 +1952,26 @@ function legend(){ const near=vb.w*PX_M<=SHOW_M, m=mode(), key=[near,!!selected,
   // the map stays light in dark mode, so its swatches sit on a bit of the map's background
   const edge='color-mix(in oklab,var(--map-sel) 60%,var(--map-bg))', bg='box-shadow:0 0 0 3px var(--map-bg)';
   const disc=(c,sq)=>`width:12px;height:12px;border-radius:${sq?1:6}px;background:${c};opacity:.8;${bg}`;
-  if(near&&META&&m==='walk'){ if(spot) item(`width:14px;height:14px;border-radius:50%;background:color-mix(in oklab,var(--walk) 10%,var(--map-bg));border:1.5px dashed var(--map-sel)`,`What the card counts: within ${M()} m of the dot`);
-    else item(`width:14px;height:14px;border-radius:50%;border:1.5px dashed var(--map-sel);${bg}`,`Tap the map to count what's within ${M()} m`); }
-  if(near&&META&&m==='drive'&&layers.park){ const T=arrival(), E=leaving(T), at=`${dayWord(T,sfNow())==='today'?'':shortDate(T)+', '}${fmtClock(T)}`;
-    [['ok','Free for your stay'],['pay','Pay at the meter'],['move','Have to move before your stay ends'],['no','No parking when you arrive']]
-      .forEach(([k,t])=>item(`height:5px;border-radius:3px;background:var(--park-${k});${bg}`,t));
-    H('li',{textContent:`Each side of the street is its own line, for ${at} and ${stay==='night'?'overnight':stay+' hr'}`},lg); }
-  if(near&&META&&m==='drive'){ if(!layers.park) item(`height:6px;border-radius:3px;background:var(--map-line);${bg}`,'Tap a block to pick it');
-    if(selected) item(`height:12px;border-radius:6px;background:var(--${layers.park?'walk-line':'map-line'});border:2px solid var(--map-sel);box-shadow:0 0 0 2px var(--map-bg)`,'The block you picked'); }
+  // dots and marks sized by how many: said once, after them
+  const more=()=>H('li',{textContent:'Bigger = more'},lg);
+  if(near&&META&&m==='walk'&&spot) item(`width:14px;height:14px;border-radius:50%;background:color-mix(in oklab,var(--walk) 10%,var(--map-bg));border:1.5px dashed var(--map-sel)`,'The card counts inside this circle');
+  if(near&&META&&m==='drive'&&layers.park)
+    [['ok','Free'],['pay','Pay at the meter'],['move','Time-limited'],['no','No parking']].forEach(([k,t])=>item(`height:5px;border-radius:3px;background:var(--park-${k});${bg}`,t));
   if(m==='walk'&&META){
     if(near&&layers.hin) item(`height:6px;border-radius:3px;background:var(--walk);${bg}`,'High Injury Network').insertAdjacentHTML('beforeend',INFO);
     if(near){
-      if(layers.people) item(disc('var(--people)'),'Police reports of violence, robbery or weapons at a corner');
-      if(layers.drugs) item(disc('var(--drugs)',1),'Police reports of drug offenses at a corner');
-      if(layers.calls) item(`width:13px;height:13px;border-radius:50%;border:2.5px solid var(--calls);background:var(--map-bg);${bg}`,'Calls to police about fights, weapons, robbery or threats at a corner'); }
+      if(layers.people) item(disc('var(--people)'),'Violence & robbery reports');
+      if(layers.drugs) item(disc('var(--drugs)',1),'Drug offense reports');
+      if(layers.calls) item(`width:13px;height:13px;border-radius:50%;border:2.5px solid var(--calls);background:var(--map-bg);${bg}`,'Calls to police');
+      if(layers.people||layers.drugs||layers.calls) more(); }
     else if(HOODS) item(`width:40px;height:10px;border-radius:2px;background:linear-gradient(90deg,color-mix(in oklab,var(--people) 10%,var(--map-bg)),color-mix(in oklab,var(--people) 90%,var(--map-bg)))`,
-      'Neighborhoods by police reports of violence and robbery per km of street, fewer to more'); }
-  if(near&&META&&m==='drive'&&layers.closures){ if(tempState==='ok'){ item(`height:8px;border-radius:0;background:repeating-linear-gradient(90deg,var(--closed) 0 3px,transparent 3px 8px);${bg}`,'Street closed at the time picked');
+      'Violence & robbery reports per km of street, fewer to more'); }
+  if(near&&META&&m==='drive'&&layers.closures){ if(tempState==='ok'){ item(`height:8px;border-radius:0;background:repeating-linear-gradient(90deg,var(--closed) 0 3px,transparent 3px 8px);${bg}`,'Street closed');
       item(`height:5px;border-radius:0;background:repeating-linear-gradient(90deg,color-mix(in oklab,var(--closed) 70%,var(--map-bg)) 0 3px,transparent 3px 8px);${bg}`,'Some lanes closed'); }
     else if(tempState==='failed') H('li',{textContent:'Couldn\'t load today\'s closures from data.sf.gov'},lg); }
   if(m==='drive'&&META&&layers.garages) item('','City-run garage or lot',GAR_SW);
-  if(m==='drive'&&META){ if(layers.cams){ item('','Speed camera (posted limit)',SPEED_SW); item('','Red-light camera',RED_SW); }
-    if(near&&layers.cars) item(disc('var(--cars)'),'Car break-ins reported at a corner'); }
+  if(m==='drive'&&META){ if(layers.cams){ item('','Speed camera (speed limit)',SPEED_SW); item('','Red-light camera',RED_SW); }
+    if(near&&layers.cars){ item(disc('var(--cars)'),'Car break-ins'); more(); } }
   if(HOODS&&!near&&!(m==='walk'&&META)) item(`width:16px;height:12px;border-radius:2px;border:1.5px solid ${edge};background:color-mix(in oklab,var(--map-line) 20%,var(--map-bg))`,'Neighborhood');
   if(fix) item('width:14px;height:14px;border-radius:50%;background:var(--map-you);border:2.5px solid #fff;box-shadow:0 0 0 3px color-mix(in oklab,var(--map-you) 25%,transparent)','Your location'); }
 

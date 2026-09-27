@@ -89,6 +89,15 @@ about · disclaimer
    (street cleaning shows the posted time behind the dots).
 6. **City garages & lots nearby**, **Car break-ins at its corners**, **Cameras near here**.
 
+Parts 2 to 6 are rows, closed until tapped, each with its short answer under its name (the next cleaning day, metered
+spaces and limits, closures listed, tickets and the most common kind, the nearest garage, break-ins, cameras); rows
+opened stay open for the next block (2026-09-27). The ticket count left the card's header for the tickets row.
+
+**On a phone** (2026-09-27) the map starts on the first screen (about 470 px down on a 375×812 screen, from 790): short
+ledes, the location button as its icon and "Near me" beside the search box, one-line notes for SF time / overnight and
+after dark, and the layer chips in one row that scrolls sideways. The location privacy line shows when the button is pressed, and
+the disclaimer's "What the page loads" keeps the long version.
+
 How "Can I park here?" decides:
 
 - A side's rules: street cleaning, meters (the general grey or green ones with the most spaces, else yellow or red, else
@@ -124,6 +133,9 @@ compares the circle with one the same size around each of the city's 7,550 inter
   no parking for the time and stay picked) · *Closures* (on; streets closed at the time picked, dashed) · *City garages
   & lots* · *Speed & red-light cameras* (on) · *Car break-ins*. Only the map cells in view are recolored when the time
   or stay changes. *Tickets per block* was dropped 2026-09-26 (too crowded); tickets stay on the card and in the summary.
+- Legend labels are short (Citina, 2026-09-27): Free · Pay at the meter · Time-limited · No parking; "Violence & robbery
+  reports", "Calls to police", "Bigger = more". What to tap is said on the map ("Tap a street to pick a block", "Tap the
+  map to pick a spot") until something is picked, then the tag names the neighborhood.
 - Walk: High Injury Network · violence and robbery · drug offenses · calls to police, all on, with neighborhoods shaded
   while the whole city shows, and the card's circle on top.
 
