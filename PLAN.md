@@ -67,7 +67,7 @@ time control    drive: When [Now | pick day+time]  For [1 hr 2 hr 4 hr Overnight
 │ OSM tiles + block lines               │ │ cards (per mode)     │
 │ zoom / fit SF / north                 │ │                      │
 └───────────────────────────────────────┘ └──────────────────────┘
-legend (per mode)
+legend (per mode)                         (beside the map, the card's top is level with the map's)
 summary         drive: parking tickets across the city · walk: walking in the city as a whole
 method          one closed row per topic, per mode
 about · disclaimer
@@ -131,9 +131,10 @@ compares the circle with one the same size around each of the city's 7,550 inter
 1. **Reported to police** — robbery, assault and other violence, pickpocketing, weapons, drug offenses, most first; tap a
    kind for what it covers and, with 10 or more, its half-hour dot chart; ranks; an hour chart and how many after dark.
 2. **Calls to police** — fights and assaults, a gun or knife, robbery, threats and harassment, the same way.
-3. **People walking hit** — "16 people walking hit in the past two years" and "3 badly hurt or killed", each number big
-   with its words after it; the High Injury Network streets through the circle (with a "?" to its explanation), the
-   rank, the hour chart, after dark, the top causes in plain words.
+3. **People walking hit** — "16 people walking hit in the past two years", the number big with its words after it; the
+   High Injury Network streets through the circle (with a "?" to its explanation), the rank, the hour chart, after
+   dark, the top causes in plain words. No count of the badly hurt or killed for a circle, or for a corner in the
+   summary: so few people could point to someone (Citina, 2026-09-27). Citywide totals keep them.
 
 Like the driving card, each is a row closed until tapped, its count under its name ("Calls to police — 1,526 in the
 past two years"); the rows opened stay open for the next spot. Ranks read "Top 2% of SF intersections"; each row ends

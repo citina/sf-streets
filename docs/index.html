@@ -506,7 +506,7 @@
         </div>
         <div class="card">
           <h4>People walking hit</h4>
-          <div class="ph">How many people walking were hit by cars within <span class="rtxt">200 m</span> in the last two years, how many were badly hurt or killed, when and why, and which streets there are on the High Injury Network.</div>
+          <div class="ph">How many people walking were hit by cars within <span class="rtxt">200 m</span> in the last two years, when and why, and which streets there are on the High Injury Network.</div>
         </div>
       </div>
     </aside>
@@ -516,7 +516,7 @@
     <b>Street cleaning.</b> SF posts each block side's cleaning day, hours and weeks, and publishes the same schedule as open data. This page reads it straight from that list and shows how often each one gets ticketed; for the official answer, check the posted sign or <a href="https://sfpublicworks.org/services/mechanical-street-sweeping-and-street-cleaning-schedule">SF Public Works</a>.
   </div>
   <div class="aside" data-for="walk" id="hin">
-    <b>The High Injury Network</b> (the orange-red lines on the map) is San Francisco's own name for its list of the streets where the most people were killed or badly hurt in traffic from 2020 to 2024, whether walking, cycling or driving. The city's health department made it for <a href="https://www.visionzerosf.org/about/what-is-vision-zero/">Vision Zero</a>, San Francisco's policy since 2014 to end traffic deaths, from police crash reports matched with hospital and ambulance records: a stretch of one street at least a quarter mile long is on it if it had 10 or more people killed or badly hurt per mile.<span id="hinShare"></span>
+    <b>The High Injury Network</b> (the orange-red lines on the map) is the city's list of the streets where the most people were killed or badly hurt in traffic, made for <a href="https://www.visionzerosf.org/about/what-is-vision-zero/">Vision Zero</a>, its goal of ending traffic deaths.<span id="hinShare"></span>
   </div>
 
   <section id="explain">
@@ -626,7 +626,7 @@
       <details data-for="walk"><summary>The circle</summary>
         <p>The walking card counts what's within a distance of the spot you pick: 100 to 500 m, 200 m to start (about 650 ft, a 3-minute walk). Distances are as the crow flies, not along the streets. Crashes count where the report places them; police reports and calls count at the corner they're placed at. The ranks compare the circle with one the same size around each of the city's intersections (where two or more differently named streets meet): "Top 4% of SF intersections" means only 4% have as many or more; 96% have fewer.</p></details>
       <details data-for="walk"><summary>People walking hit</summary>
-        <p><a href="https://data.sf.gov/d/ubvf-ztfx">Traffic crashes resulting in injury</a> (SFPD, via data.sf.gov) from the two years up to the latest in the data, where the other party was a pedestrian. The card counts every one the report places inside the circle. "Badly hurt" is the report's severe injury; the cause is the report's primary collision factor, in plainer words.</p></details>
+        <p><a href="https://data.sf.gov/d/ubvf-ztfx">Traffic crashes resulting in injury</a> (SFPD, via data.sf.gov) from the two years up to the latest in the data, where the other party was a pedestrian. The card counts every one the report places inside the circle, and doesn't say how badly they were hurt: in a circle so few people could point to someone. "Badly hurt" in the summary is the report's severe injury; the cause is the report's primary collision factor, in plainer words.</p></details>
       <details data-for="walk"><summary>High Injury Network</summary>
         <p>San Francisco's <a href="https://data.sf.gov/d/enwt-3u8m">2024 High Injury Network</a>, from the Department of Public Health for <a href="https://www.visionzerosf.org/about/what-is-vision-zero/">Vision Zero</a>, the city's policy since 2014 to end traffic deaths. It counts everyone killed or badly hurt in traffic from 2020 to 2024, walking, cycling or driving, from police crash reports matched with records from Zuckerberg San Francisco General Hospital and the ambulance services; the hospital decides how badly each person was hurt. Streets are split into stretches of one street name at least a quarter mile long, and a stretch is on the network if it had 10 or more people killed or badly hurt per mile. Ends more than 500 ft past the last such person on that street are then left off. The card names the streets on it that pass through the circle. The share of people walking hit on it, under the map, counts a crash as on it when it happened on one of its blocks or at one of their corners.</p></details>
       <details data-for="walk"><summary>Police reports</summary>
@@ -1579,13 +1579,12 @@ async function fillWalk(){
     if(!v) return `<div class="rank">No ${what} ${within} in these two years.</div>`;
     const t=f>=50?`Top <b>${Math.max(1,100-f)}%</b> of SF intersections.`:'Fewer than most SF intersections.';
     return `<div class="rank">${lead?`${lead}: ${t[0].toLowerCase()}${t.slice(1)}`:t}</div>`; };
-  const bad=hit.filter(x=>x[3]>=2).length, killed=hit.filter(x=>x[3]===3).length;
   const hinTxt=hinNames.length?`${esc(listTxt(hinNames))}, which ${hinNames.length===1?'passes':'pass'} through the circle, ${hinNames.length===1?'is':'are'} on the High Injury <span class="nb">Network${INFO}.</span>`
     :`No street ${within} is on the High Injury <span class="nb">Network${INFO}.</span>`;
-  // people walking hit goes last, after the police rows: each number big, its words after it
+  // people walking hit goes last, after the police rows: the number big, its words after it. How badly they were hurt
+  // isn't shown for a circle: so few people that it could point to someone
   let hc=`<div class="glance inline" style="grid-template-columns:minmax(0,1fr)">
-      <div><span class="v">${num(hit.length)}</span> <span class="k">${hit.length===1?'person':'people'} walking hit ${yrs}</span></div>
-      <div><span class="v">${bad}</span> <span class="k">badly hurt or killed${killed?` (${killed} killed)`:''}</span></div></div>
+      <div><span class="v">${num(hit.length)}</span> <span class="k">${hit.length===1?'person':'people'} walking hit ${yrs}</span></div></div>
     <div class="sm-note">${hinTxt}</div>${rank('hit',hit.length,'people walking hit')}`;
   if(hit.length){
     const byH=new Array(24).fill(0); hit.forEach(x=>byH[x[2]]++);
@@ -1595,7 +1594,6 @@ async function fillWalk(){
     hc+=`<div class="sm-note" style="margin-top:12px">Main cause in the police report:</div><table class="ktab">${Object.entries(why).sort((a,c)=>c[1]-a[1]).slice(0,3)
       .map(([k,n])=>`<tr><td>${esc(C.causes[k])}</td><td class="n">${n}</td></tr>`).join('')}</table>`;
   }
-  const hitPeek=`${num(hit.length)} ${yrs}${bad?` · ${bad} badly hurt or killed`:''}`;
   let h='';
   const tapTxt='<div class="sm-note" style="margin:0 0 6px">Tap a kind for what it covers and when it happens.</div>';
   const kinds=[...P.people,...P.drugs], tot=k=>corners.reduce((s,c)=>s+kcount(c,[k]),0);
@@ -1618,7 +1616,7 @@ async function fillWalk(){
   if(Q) h+=fold('wq','Calls to police',`${qAll?num(qAll):'None'} ${yrs}`,`${qAll?tapTxt:''}<div id="qRows"></div>
     ${rank('calls',qAll,'calls to police about these')}${qChart}
     <div class="sm-note">A call is what someone reported, not what police found.</div>`);
-  wc.innerHTML=h+fold('wh','People walking hit',hitPeek,hc);
+  wc.innerHTML=h+fold('wh','People walking hit',`${num(hit.length)} ${yrs}`,hc);
   watchFolds(wc);
   if(openFor!==spot){ openKinds.clear(); openFor=spot; }
   kindRows($('#pRows'),pRows,{title:`What time of day they happened${whenTxt()}`,one:'report',many:'reports',when:'it happened',where:within});
@@ -1852,8 +1850,8 @@ function buildSummary(){
   const C=META.crashes, P=META.police, sev=Z.sev, n=sum(sev.map(s=>s[0]+s[1])), killed=sev[3][0]+sev[3][1], hurt=sev[2][0]+sev[2][1];
   const act=Object.fromEntries(Z.actions), inWalk=(act['Crossing in a crosswalk at an intersection']||0)+(act['Crossing in a mid-block crosswalk']||0);
   const people=sum(Z.pol_hour.map(h=>h[0])), drugs=sum(Z.pol_hour.map(h=>h[1]));
-  if(Z.hin){ const [,kmOn,kmAll,hitOn,hitAll,badOn,badAll]=Z.hin;
-    $('#hinShare').textContent=` It's ${pct(kmOn,kmAll)}% of the length of the streets on this map, yet ${pct(hitOn,hitAll)}% of the people walking hit by cars from ${fmtD(C.start)} to ${fmtD(C.end)} were on it or at its corners, and ${pct(badOn,badAll)}% of those badly hurt or killed.`; }
+  if(Z.hin){ const [,kmOn,kmAll,hitOn,hitAll]=Z.hin;
+    $('#hinShare').textContent=` It's ${pct(kmOn,kmAll)}% of the streets on this map, but ${pct(hitOn,hitAll)}% of the people walking hit were on it.`; }
   $('#sumTitle').textContent=inWalk*2>n?'Most people hit while walking were crossing in a crosswalk':'When and where people walking were hit';
   $('#sumLead').innerHTML=`From ${fmtD(C.start)} to ${fmtD(C.end)}, <b>${num(n)} people walking</b> were hit by cars in San Francisco; ${killed} of them died and ${hurt} more were badly hurt. In the two years to ${fmtD(P.end)}, police took <b>${num(people)} reports of violence and robbery</b> and ${num(drugs)} of drug offenses. Here's when and where, how, and how it compares with earlier years.`;
   $('#sumStats').innerHTML=[[num(n),'people walking hit by cars in two years'],[killed,`killed, and ${hurt} badly hurt`],
@@ -1888,11 +1886,11 @@ function buildSummary(){
         msg(`<b>${esc(h)}</b> is outlined on the map: ${num(s[1])} police reports of violence or robbery and ${num(s[3])} people walking hit in two years, on ${s[0]} km of street.${all?'':' Drag the map to see the rest of it.'}`); toMapView(); }; }); };
   hoodList($('#rlPeople'),1,v=>`${v.toFixed(0)} per km`); hoodList($('#rlHit'),3,v=>`${v.toFixed(1)} per km`);
   const rc=$('#rlCorner'); rc.innerHTML='';
-  Z.corners.forEach(([name,,,x,y,hit,bad],i)=>{ const li=H('li',{},rc); li.dataset.n=i+1; const b=H('button',{className:'plink',textContent:name},li);
+  Z.corners.forEach(([name,,,x,y,hit],i)=>{ const li=H('li',{},rc); li.dataset.n=i+1; const b=H('button',{className:'plink',textContent:name},li);
     H('span',{className:'v',textContent:`${hit} hit`},li);
     b.onclick=()=>{ clearStreet(); $('#cands').innerHTML=''; q.value=''; pickHood(-1); const px=x-O[0], py=y-O[1];
       jumpTo(px,py,spotView()); setSpot(px,py,{name},false);
-      msg(`<b>${esc(name)}</b>: ${hit} people walking were hit at this corner in two years${bad?`, ${bad} of them badly hurt or killed`:''}. The card shows what's within ${M()} m.`); toMapView(); }; });
+      msg(`<b>${esc(name)}</b>: ${hit} people walking were hit at this corner in two years. The card shows what's within ${M()} m.`); toMapView(); }; });
 
   // how: what they were doing, and the causes
   const hb=(el,rows)=>{ const mx=Math.max(...rows.map(r=>r[1])); el.innerHTML=rows.map(([t,v])=>`<div class="hb"><span>${esc(t)}</span><span class="hb-n">${num(v)}</span><span class="hb-b"><i style="width:${100*v/mx}%"></i></span></div>`).join(''); };
@@ -2006,9 +2004,11 @@ new ResizeObserver(()=>{ const w=wrap.clientWidth, h=wrap.clientHeight; if(!w||!
   clearTimeout(rt); rt=setTimeout(()=>centerOn(vb.x+vb.w/2,vb.y+vb.h/2,vb.w),150); }).observe(wrap);
 
 // beside the card, the map column stops with its bottom on screen when it's taller than the window, so the legend under
-// the map stays readable while the card scrolls
-const mapcol=$('.mapcol');
-function stick(){ mapcol.style.top=stacked()?'':Math.min(12,innerHeight-mapcol.offsetHeight-12)+'px'; }
+// the map stays readable while the card scrolls; and the card starts level with the top of the map, below the controls
+const mapcol=$('.mapcol'), panel=$('#panel');
+function stick(){ const side=!stacked();
+  mapcol.style.top=side?Math.min(12,innerHeight-mapcol.offsetHeight-12)+'px':'';
+  panel.style.marginTop=side?wrap.getBoundingClientRect().top-mapcol.getBoundingClientRect().top+'px':''; }
 new ResizeObserver(stick).observe(mapcol); addEventListener('resize',stick);
 
 showRadius(); applyLayers(); renderPanel(); ready=true;
