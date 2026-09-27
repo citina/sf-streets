@@ -139,7 +139,8 @@ compares the circle with one the same size around each of the city's 7,550 inter
 Like the driving card, each is a row closed until tapped, its count under its name ("Calls to police — 1,526 in the
 past two years"); the rows opened stay open for the next spot. Ranks read "Top 2% of SF intersections"; each row ends
 with one short note (reports are placed at the nearest corner; a call is what someone reported, not what police found),
-and the dates and the rest are in the method (Citina, 2026-09-27).
+and the dates and the rest are in the method (Citina, 2026-09-27). Before a spot is picked the card is one line ("See
+what's within 200 m of it: police reports, calls to police and people walking hit"), as on the driving side.
 
 **Map layers**
 

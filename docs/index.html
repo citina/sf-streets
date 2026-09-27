@@ -217,8 +217,6 @@
   .unit{text-transform:none}
   .card{border-top:1px solid var(--rule);padding:16px 0 14px;margin-top:14px}
   .card h4{font-family:"Barlow Condensed","Barlow",sans-serif;font-size:22px;font-weight:700;line-height:1.1;color:var(--ink);margin:0 0 12px}
-  .ph{font-size:14px;line-height:1.5;color:var(--ink-2)}
-  .ph ul{margin:6px 0 0;padding-left:18px}
   .verdict{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 4px}
   .verdict.one{grid-template-columns:minmax(0,1fr)}
   @container (max-width:360px){ .verdict{grid-template-columns:minmax(0,1fr)} }
@@ -493,22 +491,8 @@
       <!-- driving: filled in for the block picked -->
       <div data-for="drive" id="driveCards"></div>
 
-      <!-- walking: filled in for the spot picked; the placeholders say what's there before one is picked -->
+      <!-- walking: filled in for the spot picked -->
       <div data-for="walk" id="walkCards"></div>
-      <div data-for="walk" id="walkPh">
-        <div class="card">
-          <h4>Reported to police</h4>
-          <div class="ph">Robberies, assaults, pickpocketing, weapons and drug offenses, within <span class="rtxt">200 m</span>, and how that compares with the same circle around every intersection in the city.</div>
-        </div>
-        <div class="card">
-          <h4>Calls to police</h4>
-          <div class="ph">What people called police about within <span class="rtxt">200 m</span>: fights and assaults, someone with a gun or knife, robbery, threats and harassment.</div>
-        </div>
-        <div class="card">
-          <h4>People walking hit</h4>
-          <div class="ph">How many people walking were hit by cars within <span class="rtxt">200 m</span> in the last two years, when and why, and which streets there are on the High Injury Network.</div>
-        </div>
-      </div>
     </aside>
   </div>
 
@@ -983,8 +967,7 @@ let radius=200; try{ const r=+localStorage.getItem('sf-radius'); if(okRadius(r))
 const M=()=>radius;
 // a view that fits the circle (its width across the map's shorter side, and a margin), and at least about 800 m
 const spotView=()=>Math.max(BOX_M,M()*2.4*Math.max(1,wrap.clientWidth/Math.max(1,wrap.clientHeight)))/PX_M;
-function showRadius(){ const t=radius+' m'; $('#rad').value=radius; $('#rad').setAttribute('aria-valuetext',t); $('#radOut').textContent=t;
-  $$('.rtxt').forEach(e=>e.textContent=t); }
+function showRadius(){ const t=radius+' m'; $('#rad').value=radius; $('#rad').setAttribute('aria-valuetext',t); $('#radOut').textContent=t; }
 function setRadius(r, keep){ if(!okRadius(r)) return; radius=r; showRadius();
   if(keep) try{ localStorage.setItem('sf-radius',String(r)); }catch(e){}
   drawSpot(); legend(); if(mode()==='walk'){ renderSpot(); setHash(); } }
@@ -1005,7 +988,7 @@ function renderSpot(){
   $('#pBetween').hidden=true;
   $('#pTitle').textContent=spot?spot.name||spot.title||'Around here':'Pick a spot';
   $('#pSub').hidden=!!spot&&!spot.sub;
-  $('#pSub').textContent=spot?spot.sub||'':`Search for an address, use your location, or zoom in and tap the map. The card counts what's within ${M()} m of that spot; below is what it will hold.`;
+  $('#pSub').textContent=spot?spot.sub||'':`See what's within ${M()} m of it: police reports, calls to police and people walking hit.`;
   fillWalk();
 }
 // the circle on the map, with a dot in its middle that keeps its size at any zoom
@@ -1548,7 +1531,6 @@ async function fillDrive(b){
 let walkReq=0;
 async function fillWalk(){
   const wc=$('#walkCards'), req=++walkReq;
-  $('#walkPh').hidden=!!spot;
   if(!spot||!META){ wc.innerHTML=''; return; }
   const m=M(), R=m/PX_M, {x:sx,y:sy}=spot, pad=R+60/PX_M;
   const around=await Promise.all(cellKeys(sx-pad,sy-pad,sx+pad,sy+pad).map(loadCell));
