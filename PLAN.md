@@ -56,7 +56,7 @@ data.sf.gov, plus OpenStreetMap for the map images.
 ## 3. The page (`docs/index.html`)
 
 ```
-mast            SF Streets · (sister sites)                       Updated weekly · About
+mast            SF Streets · (sister sites)                       Updated Sep 26 · About  (the day the data was built)
 h1 + lede       changes with mode, with a link to the summary
 MODE SWITCH     [ 🚗 I'm driving ]  [ 🚶 I'm walking ]
 find bar        drive: Show blocks near me · walk: Show what's around me · search street / address / neighborhood
@@ -79,8 +79,8 @@ about · disclaimer
    cost of the stay, the rate, the limit, when meters stop), *move by* (street cleaning, a tow-away, a time limit or a
    closure starting during the stay) or *no parking now*. Both sides in one box when they agree. Worked out in the page
    from the rules in the cell file (§4), so any day and time works.
-2. **Street cleaning** — each side's posted sign, drawn; the next two dates; "Tickets were written on X% of this side's
-   cleaning days in the past two years".
+2. **Street cleaning** — each side's posted sign, drawn; the next two dates; "Ticketed on X% of cleaning days (N of M)
+   in the past two years".
 3. **Meters, time limits, permits** — metered spaces by cap color, when they're paid, rates and limits, tow-away hours,
    time limits with their permit area, no-parking zones; the meter rate at the time picked.
 4. **Closures and temporary signs** — this block's street closures and temporary no-parking signs, today and the next
@@ -92,6 +92,13 @@ about · disclaimer
 Parts 2 to 6 are rows, closed until tapped, each with its short answer under its name (the next cleaning day, metered
 spaces and limits, closures listed, tickets and the most common kind, the nearest garage, break-ins, cameras); rows
 opened stay open for the next block (2026-09-27). The ticket count left the card's header for the tickets row.
+
+Sides are named by direction alone ("East side"), never odd or even; the picked block has a letter on the map on each
+side (N, E, SE...) so the reader can tell which is which. Before a block is picked the card is one line, not a list of
+what it will hold. After a search on a phone (the card is below the map), the message above the map gives the answer
+too ("Valencia St, 500 block: both sides free until 6 am · See the card ↓") and follows the block picked; any other
+message replaces it. Ranks read "Top 4% of SF blocks" (and "Fewer than most SF blocks" under the median). The card
+ends with one line on its sources and a link to the method (Citina, 2026-09-27).
 
 **On a phone** (2026-09-27) the map starts on the first screen (about 470 px down on a 375×812 screen, from 790): short
 ledes, the location button as its icon and "Near me" beside the search box, one-line notes for SF time / overnight and
@@ -111,8 +118,8 @@ How "Can I park here?" decides:
 - Holidays, from SFMTA's schedule: nothing but tow-away and no-parking-any-time on New Year's Day, Thanksgiving and
   Christmas; on the other nine city holidays, meters, holiday street cleaning and tow-away still run, time limits,
   daytime street cleaning and commuter-shuttle hours don't. Closures and temporary signs apply every day.
-- A meter piece marked "alternate" with no rate (often commuter-shuttle hours) is "kept for another use (see the sign)",
-  never free.
+- A meter piece marked "alternate" with no rate (often commuter-shuttle hours) is "not for general parking (see the
+  sign)", never free.
 
 **Walking card** (built 2026-09-26)
 
@@ -124,8 +131,14 @@ compares the circle with one the same size around each of the city's 7,550 inter
 1. **Reported to police** — robbery, assault and other violence, pickpocketing, weapons, drug offenses, most first; tap a
    kind for what it covers and, with 10 or more, its half-hour dot chart; ranks; an hour chart and how many after dark.
 2. **Calls to police** — fights and assaults, a gun or knife, robbery, threats and harassment, the same way.
-3. **Pedestrians hit** — how many, how many badly hurt or killed, the High Injury Network streets through the circle
-   (with a "?" to its explanation), the rank, the hour chart, after dark, the top causes in plain words.
+3. **People walking hit** — "16 people walking hit in the past two years" and "3 badly hurt or killed", each number big
+   with its words after it; the High Injury Network streets through the circle (with a "?" to its explanation), the
+   rank, the hour chart, after dark, the top causes in plain words.
+
+Like the driving card, each is a row closed until tapped, its count under its name ("Calls to police — 1,526 in the
+past two years"); the rows opened stay open for the next spot. Ranks read "Top 2% of SF intersections"; each row ends
+with one short note (reports are placed at the nearest corner; a call is what someone reported, not what police found),
+and the dates and the rest are in the method (Citina, 2026-09-27).
 
 **Map layers**
 
@@ -136,8 +149,9 @@ compares the circle with one the same size around each of the city's 7,550 inter
 - Legend labels are short (Citina, 2026-09-27): Free · Pay at the meter · Time-limited · No parking; "Violence & robbery
   reports", "Calls to police", "Bigger = more". What to tap is said on the map ("Tap a street to pick a block", "Tap the
   map to pick a spot") until something is picked, then the tag names the neighborhood.
-- Walk: High Injury Network · violence and robbery · drug offenses · calls to police, all on, with neighborhoods shaded
-  while the whole city shows, and the card's circle on top.
+- Walk: High Injury Network · violence and robbery (on) · drug offenses · calls to police (off until tapped, so busy
+  areas don't pile up marks; 2026-09-27), with neighborhoods shaded while the whole city shows, and the card's circle on
+  top. On a phone the map's hint is just "Pick a neighborhood".
 
 **Wording rules** (Citina)
 
@@ -146,7 +160,8 @@ compares the circle with one the same size around each of the city's 7,550 inter
   means free of the rules in the city's lists).
 - No "safe time" or "safe street" claims.
 - The disclaimer says the page is not 100% accurate: it's built from the city's data, which misses temporary changes;
-  the posted signs count; the explanations are the page's own reading of the data (Citina, 2026-09-26).
+  the posted signs count; the explanations are the page's own reading of the data (Citina, 2026-09-26). It's one short
+  paragraph; "not a guide to parking illegally" and what the page loads are behind "More" (2026-09-27).
 - Privacy lines promise only what the page does. "Show blocks near me" only centers the map; "Show what's around me"
   also puts the circle there, in the browser, kept out of the link. The driving side loads the whole city's closures
   and temporary signs from data.sf.gov, never just the area in view.
