@@ -121,9 +121,9 @@ compares the circle with one the same size around each of the city's 7,550 inter
 **Map layers**
 
 - Drive: *Can I park?* (on; each side of a block its own line, about 4.5 m off the middle, colored free / pay / move /
-  no parking for the time and stay picked) or *Tickets per block* (tickets per month; one of the two at a time) ·
-  *Closures* (on; streets closed at the time picked, dashed) · *City garages & lots* · *Speed & red-light cameras* (on) ·
-  *Car break-ins*. Only the map cells in view are recolored when the time or stay changes.
+  no parking for the time and stay picked) · *Closures* (on; streets closed at the time picked, dashed) · *City garages
+  & lots* · *Speed & red-light cameras* (on) · *Car break-ins*. Only the map cells in view are recolored when the time
+  or stay changes. *Tickets per block* was dropped 2026-09-26 (too crowded); tickets stay on the card and in the summary.
 - Walk: High Injury Network · violence and robbery · drug offenses · calls to police, all on, with neighborhoods shaded
   while the whole city shows, and the card's circle on top.
 

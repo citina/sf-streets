@@ -20,10 +20,10 @@
     /* the map stays light in dark mode too, as on LA Street Rules */
     --map-bg:#fcfcfb; --map-line:#7fb2ee; --map-sel:#14140f; --map-halo:rgba(20,20,15,.28); --map-you:#d62828;
     /* walking map: blocks recede, and each layer has its own color */
-    --walk-line:#d3ccbf; --people:#9884cc; --people-soft:color-mix(in oklab,var(--people) 45%,var(--surface)); --drugs:#0b8a7f; --cars:#c07a12; --calls:#2166ac;
+    --walk-line:#d3ccbf; --people:#9884cc; --people-soft:color-mix(in oklab,var(--people) 45%,var(--surface)); --drugs:#0b8a7f; --cars:#c07a12; --calls:#2a6fb8;
     /* walking: danger reads warm; driving keeps the blue accent */
     --walk:#d4502a; --walk-soft:#f2b8a2; --ok:#1baf7a;
-    --drive-1:#cfe0f7; --drive-2:#7fb2ee; --drive-3:#2a78d6; --drive-4:#1c4f91;
+    --drive-2:#7fb2ee; --drive-3:#2a78d6;
     /* driving: can you park on this side for the stay picked? the same on the map (kept light) and the card */
     --park-ok:#1baf7a; --park-pay:#2a78d6; --park-move:#e0a01c; --park-no:#d62839; --park-none:#cfcabf; --closed:#6b3fb8; --garage:#1c5cab;
   }
@@ -36,7 +36,7 @@
       --accent:#3987e5; --accent-ink:#86b6ef;
       --panel:#262625; --panel-ink:#ffffff;
       --sign:#ebeae5; --sign-red:#b50e29; --sign-ink:#111111;
-      --walk:#e0643e; --walk-soft:#6b3322; --ok:#199e70;
+      --walk:#e0643e; --walk-soft:#8a4029; --ok:#199e70;
     }
   }
   :root[data-theme="dark"]{
@@ -47,7 +47,7 @@
     --accent:#3987e5; --accent-ink:#86b6ef;
     --panel:#262625; --panel-ink:#ffffff;
     --sign:#ebeae5; --sign-red:#b50e29; --sign-ink:#111111;
-    --walk:#e0643e; --walk-soft:#6b3322; --ok:#199e70;
+    --walk:#e0643e; --walk-soft:#8a4029; --ok:#199e70;
   }
 
   *{box-sizing:border-box}
@@ -60,6 +60,7 @@
   main{max-width:1280px;margin:0 auto;padding:26px 16px 72px}
   @media (min-width:640px){ main{padding-left:20px;padding-right:20px} }
   a{color:var(--accent-ink)}
+  b,strong{font-weight:600}
   /* five text sizes: 12px mono labels and map tags, 14px small text (notes, legend, tooltips), 15px the card and search
      messages, 16px reading text and every text input (iPhones zoom in on a smaller one), 18.5px the lede */
   .mast{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;
@@ -122,6 +123,8 @@
 
   /* ---------- finder + map ---------- */
   .explorer{display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:20px;align-items:start}
+  /* stays in view beside the card; when it's taller than the window, the script moves top up so its bottom (the map
+     and legend) stays on screen instead of its top */
   .mapcol{position:sticky;top:12px;min-width:0}
   @media (max-width:1000px){ .explorer{grid-template-columns:minmax(0,1fr)} .mapcol{position:static} }
   .findbar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
@@ -170,7 +173,7 @@
   .zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:4px}
   .zoom button{width:34px;height:34px;border-radius:8px;border:1px solid var(--edge);background:#fcfcfb;color:#14140f;
                font:600 18px/1 "Barlow",sans-serif;cursor:pointer}
-  .zoom button.fit{font-size:11px;font-family:"IBM Plex Mono",monospace}
+  .zoom button.fit{font-size:12px;font-family:"IBM Plex Mono",monospace}
   .zoom button.north svg{width:20px;height:20px;margin:0 auto}   /* its needle turns with the map */
   .maptag{position:absolute;bottom:6px;font-size:12px;padding:1px 6px;border-radius:4px;color:#56554f;background:rgba(252,252,251,.88)}
   .maptag a{color:inherit}
@@ -183,25 +186,23 @@
   .legend:empty{display:none}
   .legend li{display:inline-flex;align-items:center;gap:6px}
   .sw{width:18px;height:4px;border-radius:2px;display:inline-block;flex:none}
-  .sw.thick{height:7px;border-radius:4px}
-  .sw.ramp{width:64px;height:6px;background:linear-gradient(90deg,var(--drive-1),var(--drive-2),var(--drive-3),var(--drive-4))}
-  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
-  .dot.ring{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--walk)}
 
   /* ---------- the block card ---------- */
   .panel{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:18px 18px 6px;min-width:0}
   .p-eyebrow{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
   .p-title{font-family:"Barlow Condensed","Barlow",sans-serif;font-weight:700;font-size:32px;line-height:1;margin:4px 0 6px}
   .p-sub{font-size:15px;color:var(--ink-2)}
+  .unit{text-transform:none}
   .card{border-top:1px solid var(--rule);padding:16px 0 14px;margin-top:14px}
   .card h4{font-family:"Barlow Condensed","Barlow",sans-serif;font-size:22px;font-weight:700;line-height:1.1;color:var(--ink);margin:0 0 12px}
   .ph{font-size:14px;line-height:1.5;color:var(--ink-2)}
   .ph ul{margin:6px 0 0;padding-left:18px}
   .verdict{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 4px}
   .verdict.one{grid-template-columns:minmax(0,1fr)}
+  @container (max-width:360px){ .verdict{grid-template-columns:minmax(0,1fr)} }
   .verdict>div{background:var(--well);border-radius:8px;padding:10px 12px;border-left:5px solid var(--park-none)}
   .verdict .k{font:12px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
-  .verdict .v{font:600 22px "Barlow Condensed","Barlow",sans-serif;line-height:1.1;margin-top:3px}
+  .verdict .v{font:700 22px "Barlow Condensed","Barlow",sans-serif;line-height:1.1;margin-top:3px}
   .verdict .why{font-size:14px;line-height:1.45;color:var(--ink-2);margin-top:4px}
   .verdict>.ok{border-left-color:var(--park-ok)} .verdict>.pay{border-left-color:var(--park-pay)}
   .verdict>.move{border-left-color:var(--park-move)} .verdict>.no{border-left-color:var(--park-no)}
@@ -228,7 +229,7 @@
   .rules{margin:0;padding:0;list-style:none;font-size:15px;line-height:1.45}
   .rules li{padding:5px 0;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:14px 1fr;gap:8px;align-items:baseline}
   .rules li:last-child{border-bottom:0}
-  .rules li::before{content:"";width:10px;height:10px;border-radius:2px;background:var(--c,var(--edge));transform:translateY(1px)}
+  .rules li::before{content:"";width:10px;height:10px;border-radius:2px;background:var(--c,var(--edge));box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--ink) 22%,transparent);transform:translateY(1px)}
   .rules .sub{display:block;font-size:14px;color:var(--ink-2)}
   .rules-h{font-weight:600;font-size:15px;margin:14px 0 2px}
   .rules-h:first-child{margin-top:0}
@@ -246,12 +247,12 @@
   .closed-l.lanes{stroke-width:7;stroke-opacity:.7}
   #dsum .hb-b i{background:var(--drive-3)}
   .glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 4px}
-  .glance>div{background:var(--well);border-radius:8px;padding:8px 10px}
-  .glance .k{display:block;font:12px "IBM Plex Mono",monospace;letter-spacing:.06em;color:var(--ink-2)}
-  .glance .v{display:block;font:600 20px "IBM Plex Mono",monospace;color:var(--ink)}
+  .glance>div{background:var(--well);border-radius:8px;padding:10px 12px}
+  .glance .v{display:block;font:700 28px/1 "Barlow Condensed","Barlow",sans-serif;color:var(--ink)}
+  .glance .k{display:block;font-size:14px;line-height:1.4;color:var(--ink-2);margin-top:4px}
   .kchart-t{font-size:14px;font-weight:600;margin:12px 0 6px}
   .hours{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;height:36px;align-items:end;margin:0 0 2px}
-  .hours i{display:flex;flex-direction:column-reverse;overflow:hidden;background:var(--walk-soft);border-radius:2px 2px 0 0}
+  .hours i{display:flex;flex-direction:column-reverse;overflow:hidden;background:var(--edge);border-radius:2px 2px 0 0}
   .hours i:has(span){background:none}
   .hours i.none{height:2%;opacity:.35}
   .hours i span{display:block}
@@ -299,6 +300,7 @@
   .stats .k{display:block;font-size:14px;line-height:1.4;color:var(--ink-2);margin-top:6px}
   .figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px 32px;margin:16px 0 0}
   .fig{margin:0;container-type:inline-size;min-width:0}
+  .cmp-k{font:500 12px "IBM Plex Mono",ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:0 0 8px}
   .figs2{grid-template-columns:repeat(2,minmax(0,1fr))}
   @media (max-width:640px){ .figs2{grid-template-columns:minmax(0,1fr)} }
   .bars{display:grid;gap:2px;height:110px;align-items:end;border-bottom:1px solid var(--edge)}
@@ -311,7 +313,7 @@
   .ax span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
   .ax span.l{transform:none}
   .ax span.r{transform:translateX(-100%)}
-  @container (max-width:340px){ .ax .h3{display:none} }
+  @container (max-width:360px){ .ax .h3{display:none} }
   .lists{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px 32px;margin:24px 0 0}
   .rl{margin:0;padding:0;list-style:none;font-size:15px}
   .rl li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--rule)}
@@ -339,10 +341,9 @@
   .radius input{width:160px;margin:0;accent-color:var(--walk)}
   .radius output{font:14px "IBM Plex Mono",ui-monospace,Menlo,monospace;color:var(--ink);min-width:48px}
   .spot-ring{fill:var(--walk);fill-opacity:.07;stroke:var(--map-sel);stroke-opacity:.85;stroke-width:2;stroke-dasharray:6 4;vector-effect:non-scaling-stroke;pointer-events:none}
-  .spot-dot{fill:var(--map-sel);stroke:#fff;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
   /* "?" after a term: jumps to where the page explains it; the hit area is bigger than the mark */
   .info{position:relative;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:5px;border-radius:50%;
-        border:1.5px solid currentColor;color:var(--accent-ink);font:700 11px/1 "Barlow",system-ui,sans-serif;text-decoration:none;vertical-align:1px}
+        border:1.5px solid currentColor;color:var(--accent-ink);font:700 12px/1 "Barlow",system-ui,sans-serif;text-decoration:none;vertical-align:1px}
   .info::after{content:"";position:absolute;inset:-9px}
   .info:hover{background:var(--well)}
   .nb{white-space:nowrap}
@@ -428,7 +429,6 @@
       <!-- what the map draws -->
       <div class="chips layers" data-for="drive" data-multi><span class="ctl-label">Show</span>
         <button class="chip sm" aria-pressed="true" data-layer="park">Can I park?</button>
-        <button class="chip sm" aria-pressed="false" data-layer="tickets">Tickets per block</button>
         <button class="chip sm" aria-pressed="true" data-layer="cams">Speed &amp; red-light cameras</button>
         <button class="chip sm" aria-pressed="false" data-layer="cars">Car break-ins</button>
         <button class="chip sm" aria-pressed="true" data-layer="closures">Closures</button>
@@ -455,7 +455,7 @@
       <div class="p-eyebrow"><span data-for="drive">Block</span><span data-for="walk" id="pEyeW">Within 200 m</span></div>
       <div class="p-title" id="pTitle">Pick a block</div>
       <div class="p-sub" id="pBetween" hidden></div>
-      <div class="p-sub" id="pSub">Tap a street on the map, or search above. Below is what the card will hold.</div>
+      <div class="p-sub" id="pSub">Search above, or zoom in and tap a street on the map. Below is what the card will hold.</div>
       <div class="p-sub" id="pTix" data-for="drive" hidden></div>
 
       <!-- driving: filled in for the block picked; the placeholders say what's there before one is picked -->
@@ -502,7 +502,7 @@
     <b>Street cleaning.</b> SF posts each block side's cleaning day, hours and weeks, and publishes the same schedule as open data. This page reads it straight from that list and shows how often each one gets ticketed; for the official answer, check the posted sign or <a href="https://sfpublicworks.org/services/mechanical-street-sweeping-and-street-cleaning-schedule">SF Public Works</a>.
   </div>
   <div class="aside" data-for="walk" id="hin">
-    <b>The High Injury Network</b> (the thick lines on the map) is San Francisco's own name for its list of the streets where the most people were killed or badly hurt in traffic from 2020 to 2024, whether walking, cycling or driving. The city's health department made it for <a href="https://www.visionzerosf.org/about/what-is-vision-zero/">Vision Zero</a>, San Francisco's policy since 2014 to end traffic deaths, from police crash reports matched with hospital and ambulance records: a stretch of one street at least a quarter mile long is on it if it had 10 or more people killed or badly hurt per mile.<span id="hinShare"></span>
+    <b>The High Injury Network</b> (the orange-red lines on the map) is San Francisco's own name for its list of the streets where the most people were killed or badly hurt in traffic from 2020 to 2024, whether walking, cycling or driving. The city's health department made it for <a href="https://www.visionzerosf.org/about/what-is-vision-zero/">Vision Zero</a>, San Francisco's policy since 2014 to end traffic deaths, from police crash reports matched with hospital and ambulance records: a stretch of one street at least a quarter mile long is on it if it had 10 or more people killed or badly hurt per mile.<span id="hinShare"></span>
   </div>
 
   <section id="explain">
@@ -518,7 +518,7 @@
       <p class="sum-p" id="dsumWhen"></p>
       <div class="figs figs2">
         <figure class="fig"><div class="cmp-k">Tickets by the hour of the day</div><div id="dchHour"></div>
-          <ul class="legend"><li><span class="sw" style="height:10px;background:var(--drive-3)"></span>street cleaning</li><li><span class="sw" style="height:10px;background:var(--drive-1)"></span>everything else</li></ul></figure>
+          <ul class="legend"><li><span class="sw" style="height:10px;background:var(--drive-3)"></span>street cleaning</li><li><span class="sw" style="height:10px;background:var(--drive-2)"></span>everything else</li></ul></figure>
         <figure class="fig"><div class="cmp-k">Tickets by the day of the week</div><div id="dchDow"></div></figure>
       </div>
 
@@ -709,19 +709,16 @@ document.addEventListener('click',e=>{ const a=e.target.closest('a[href^="#"]'),
 
 // ---------- chip groups: one pressed per group, or any number with data-multi ----------
 // map layers each mode can show (data-layer chips), and the walking side's time of day
-const layers={park:true, tickets:false, closures:true, garages:false, cams:true, cars:false, hin:true, people:true, drugs:true, calls:true};
+const layers={park:true, closures:true, garages:false, cams:true, cars:false, hin:true, people:true, drugs:true, calls:true};
 let walkWhen='any';
 // driving: when you'd park (now, or a time picked) and for how long (hours, or overnight)
 let driveWhen='now', stay='2';
-const COLORINGS=['park','tickets'];   // the two ways of coloring the driving map's blocks: one at a time
 $$('.chips').forEach(g=>{
   const multi=g.hasAttribute('data-multi');
   g.addEventListener('click',e=>{
     const b=e.target.closest('.chip'); if(!b||b.disabled) return;
     if(multi){ const on=b.getAttribute('aria-pressed')!=='true'; b.setAttribute('aria-pressed', String(on));
-      if(b.dataset.layer){ layers[b.dataset.layer]=on;
-        if(on&&COLORINGS.includes(b.dataset.layer)) COLORINGS.filter(k=>k!==b.dataset.layer).forEach(k=>{ layers[k]=false; g.querySelector(`[data-layer="${k}"]`).setAttribute('aria-pressed','false'); });
-        applyLayers(); paintBlocks(); legend(); } return; }
+      if(b.dataset.layer){ layers[b.dataset.layer]=on; applyLayers(); paintBlocks(); legend(); } return; }
     g.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed', String(c===b)));
     if(g.dataset.group==='when-drive'){ driveWhen=b.dataset.v; const w=$('#whenPick'); w.hidden=driveWhen!=='pick';
       if(driveWhen==='pick'&&!w.value){ const n=sfNow(); n.setMinutes(Math.ceil(n.getMinutes()/15)*15,0,0); w.value=localInput(n); }
@@ -966,7 +963,7 @@ function renderBlock(b){
   $('#pTitle').textContent=b?blockName(b):'Pick a block';
   const bt=b&&[between(b),b.sd?`${b.sd===1?'odd':'even'}-numbered side only`:''].filter(Boolean).join(' · ');
   $('#pBetween').hidden=!bt; $('#pBetween').textContent=bt||'';
-  $('#pSub').textContent=b?(b.nh!==undefined?META.hoods[b.nh]:''):'Tap a street on the map, or search above. Below is what the card will hold.';
+  $('#pSub').textContent=b?(b.nh!==undefined?META.hoods[b.nh]:''):'Search above, or zoom in and tap a street on the map. Below is what the card will hold.';
   $('#pSub').hidden=b&&b.nh===undefined;
   const T=META&&META.tickets; $('#pTix').hidden=!b||!T||!b.sn;
   if(b&&T) $('#pTix').textContent=b.tn?`${num(b.tn[0])} SFMTA ticket${b.tn[0]>1?'s':''} since ${fmtD(T.start)}`:`No SFMTA tickets since ${fmtD(T.start)}`;
@@ -974,11 +971,11 @@ function renderBlock(b){
 }
 // the circle's name (the nearest intersection) and neighborhood need the cells around it, so fillWalk fills them in
 function renderSpot(){
-  $('#pEyeW').textContent=`Within ${distTxt(M())}`;
+  $('#pEyeW').innerHTML=`Within ${distTxt(M())}`;
   $('#pBetween').hidden=true;
   $('#pTitle').textContent=spot?spot.name||spot.title||'Around here':'Pick a spot';
   $('#pSub').hidden=!!spot&&!spot.sub;
-  $('#pSub').textContent=spot?spot.sub||'':`Tap anywhere on the map, search for an address, or use your location. The card counts what's within ${M()} m of that spot; below is what it will hold.`;
+  $('#pSub').textContent=spot?spot.sub||'':`Search for an address, use your location, or zoom in and tap the map. The card counts what's within ${M()} m of that spot; below is what it will hold.`;
   fillWalk();
 }
 // the circle on the map, with a dot in its middle that keeps its size at any zoom
@@ -1004,8 +1001,9 @@ function hourChart(title, byH, label){ const tot=h=>h.reduce((s,v)=>s+v[0],0), m
     <div class="hours-ax" aria-hidden="true">${['12am','3am','6am','9am','noon','3pm','6pm','9pm','12am'].map((t,i)=>`<span${i%2?' class="h3"':''} style="left:${i*12.5}%">${t}</span>`).join('')}</div>`; }
 // the half hours (halfHours) of some kinds, added up by the hour
 const byHour=hh=>[...Array(24)].map((_,h)=>hh[2*h]+hh[2*h+1]);
-// "250 m ~ 800 ft ~ 3-minute walk": feet to the nearest 50, minutes at about 80 m a minute
-const distTxt=m=>`${m} m ~ ${num(Math.round(m*3.28084/50)*50)} ft ~ ${Math.round(m/80)}-minute walk`;
+// "250 m · about 800 ft, a 3-minute walk": feet to the nearest 50, minutes at about 80 m a minute (HTML: the units
+// keep their case in the card's uppercase label)
+const distTxt=m=>`${m} <span class="unit">m</span> · about ${num(Math.round(m*3.28084/50)*50)} <span class="unit">ft</span>, a ${Math.round(m/80)}-minute walk`;
 const listTxt=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
 const INFO='<a class="info" href="#hin" aria-label="What is the High Injury Network?" title="What is the High Injury Network?">?</a>';
 const fmtD=s=>new Date(s+'T12:00:00').toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
@@ -1026,7 +1024,7 @@ const CALL_NOTE=['Fights with or without a weapon, assault and battery, aggravat
   'Robbery, strong-arm robbery and purse snatching.',
   'Threats and harassment, stalking, and indecent exposure.'];
 const CHART_MIN=10;   // a kind needs this many on the card for its own time-of-day chart
-const fmtT=m=>{ const h=Math.floor(m/60)%24, mm=m%60, ap=h>=12?'pm':'am', h12=h%12||12; return mm?`${h12}:${String(mm).padStart(2,'0')} ${ap}`:`${h12} ${ap}`; };
+const fmtT=m=>{ const h=Math.floor(m/60)%24, mm=m%60, ap=h>=12?'pm':'am', h12=h%12||12; return mm?`${h12}:${String(mm).padStart(2,'0')} ${ap}`:h===12?'noon':`${h12} ${ap}`; };
 const fmtRange=(a,z)=>{ const s=fmtT(a), e=fmtT(z); return s.slice(-2)===e.slice(-2)?s.slice(0,-3)+'–'+e:s+'–'+e; };
 // one kind's reports or calls at the corners (kt or qt, analyze_sf.py) by the half hour of the day, for the time of day picked
 function halfHours(corners, field, k){
@@ -1108,6 +1106,7 @@ function holidayOf(d){ const y=d.getFullYear();
 // meters: what each cap color is kept for, as the rules say it
 const CAP_FOR=['anyone','a short stay','commercial loading','trucks loading','motorcycles','tour buses','disabled placards','passenger loading'];
 const CAP_NAME=['grey','green','yellow','red','black','brown','blue','white'];
+const CAP_COLOR=['#9a9993','#1baf7a','#e8c01c','#d62839','#1f1f1d','#8a5a2b','#2a78d6','#ffffff'];
 // the meters a side's verdict goes by: the general (grey or green) ones with the most spaces, else the yellow or red ones,
 // else any
 function mainMeter(b, s){ const g=(b.mt||[]).filter(m=>m[0]===s&&m[3].length); if(!g.length) return null;
@@ -1249,7 +1248,7 @@ function tempRules(b, s){ const out=[];
   return out; }
 
 /* ---------- the map: each side of a block its own line, a few metres off the middle of the street, colored by whether
-   you can park there for the stay picked ("Can I park?"), or each block by its tickets ("Tickets per block") ---------- */
+   you can park there for the stay picked ("Can I park?") ---------- */
 const SIDE_M=4.5, TRIM_M=7;
 function sideLines(b){
   const d=SIDE_M/PX_M, paths=['',''];
@@ -1268,20 +1267,17 @@ function sideLines(b){
   const own=sidesOf(b);
   return paths.map((dd,s)=>dd&&own.includes(s)?S('path',{d:dd,class:'side-l'},gSides):null);
 }
-const TIX_RAMP=[[.5,'var(--drive-1)'],[2,'var(--drive-2)'],[8,'var(--drive-3)'],[Infinity,'var(--drive-4)']];
-const tixMonths=()=>Math.max(1,(new Date(META.tickets.end)-new Date(META.tickets.start))/(864e5*30.44));
 // only the cells in view are painted when the time, stay or layer changes; the others when they come into view
 let paintT=0, paintE=0, paintKey='';
-function paintCell(cell){ const park=mode()==='drive'&&layers.park&&!!META.tickets, tix=mode()==='drive'&&layers.tickets&&!!META.tickets; cell._pk=paintKey;
+function paintCell(cell){ const park=mode()==='drive'&&layers.park&&!!META.tickets; cell._pk=paintKey;
   cell.b.forEach(b=>{
     if(b.sl) b.sl.forEach((el,s)=>{ if(el&&park) el.style.stroke=`var(--park-${bestPark(b,s,paintT,paintE).st})`; });
-    const n=b.tn?b.tn[0]/tixMonths():0; b.el.style.stroke=tix?n?TIX_RAMP.find(([v])=>n<v)[1]:'var(--park-none)':'';
     const at=mode()==='drive'&&layers.closures&&TEMP&&TEMP.has(b.id)?closedAt(b,paintT,paintE):'';
     if(at){ if(!b.cl) b.cl=S('path',{d:b.d},gClose); b.cl.setAttribute('class','closed-l'+(at==='lanes'?' lanes':'')); b.cl.style.display=''; } else if(b.cl) b.cl.style.display='none'; }); }
 // a block's street closure during a stay: 'closed', 'lanes' (some lanes closed) or ''
 function closedAt(b, T, E){ const R=TEMP.get(b.id).filter(x=>x.kind!=='sign').map(x=>({k:x.kind,days:x.days,t0:x.t0,t1:x.t1,from:x.from,to:x.to,temp:true}));
   const iv=spans(R,dayStart(T,-1),new Date(E)).filter(i=>i.s<+E&&i.e>+T); return iv.some(i=>i.r.k==='closed')?'closed':iv.length?'lanes':''; }
-function paintBlocks(){ if(!META) return; paintT=arrival(); paintE=leaving(paintT); paintKey=[+paintT,+paintE,mode(),layers.park,layers.tickets,layers.closures,tempState].join(); paintVisible(); }
+function paintBlocks(){ if(!META) return; paintT=arrival(); paintE=leaving(paintT); paintKey=[+paintT,+paintE,mode(),layers.park,layers.closures,tempState].join(); paintVisible(); }
 function paintVisible(){ if(!paintKey) return; cellKeys(...viewBounds()).forEach(k=>{ const c=cells.get(k); if(c&&c.b&&c._pk!==paintKey) paintCell(c); }); }
 function driveTip(b){ if(!META.tickets) return ''; if(!layers.park) return b.tn?`<br>${num(b.tn[0])} tickets in two years`:'';
   const W={ok:'free',pay:'pay',move:'have to move',no:'no parking'};
@@ -1293,9 +1289,11 @@ setInterval(()=>{ if(driveWhen==='now'&&mode()==='drive'&&!document.hidden) driv
 
 /* ---------- the driving card ---------- */
 const fmtClock=d=>fmtT(d.getHours()*60+d.getMinutes());
+// a time on the card: today's by the clock alone, others with their day (counted from today in SF, not from the time picked)
 const dayWord=(d,T)=>{ const k=Math.round((dayStart(d)-dayStart(T))/864e5); return k===0?'today':k===1?'tomorrow':k>1&&k<7?DAYS[wd(d)]:d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); };
-const fmtAt=(ms,T)=>{ const d=new Date(ms), w=dayWord(d,T); return w==='today'?fmtClock(d):`${w} ${fmtClock(d)}`; };
-const spanTxt=(i,T)=>{ const d=new Date(i.s), w=dayWord(d,T), r=fmtRange(d.getHours()*60+d.getMinutes(),(new Date(i.e).getHours()*60+new Date(i.e).getMinutes())||1440); return w==='today'?`today ${r}`:`${w} ${r}`; };
+const dayAnd=(w,t)=>w+(/\d$/.test(w)?', ':' ')+t;   // "Tue 6 am", "Mon, Oct 12, 6 am"
+const fmtAt=ms=>{ const d=new Date(ms), w=dayWord(d,sfNow()); return w==='today'?fmtClock(d):dayAnd(w,fmtClock(d)); };
+const spanTxt=i=>{ const d=new Date(i.s), w=dayWord(d,sfNow()), r=fmtRange(d.getHours()*60+d.getMinutes(),(new Date(i.e).getHours()*60+new Date(i.e).getMinutes())||1440); return dayAnd(w,r); };
 const money=c=>`$${(c/100).toFixed(2)}`;
 // "Mon–Fri", "Tuesday", "Mon & Thu", "Every day"; days as bits, Monday first, bit 7 holidays
 function dayText(mask, long){ const ds=[0,1,2,3,4,5,6].filter(d=>mask>>d&1); let t;
@@ -1326,19 +1324,19 @@ function verdictTxt(b, s, T, E){
   // with meters and spaces without them, which the answer is for
   const at=O.opts.length>1?(v.opt.at==='meter'?'At a meter':'At a space without a meter'):'', lead=t=>at?`${at}: ${t[0].toLowerCase()}${t.slice(1)}`:t;
   // part of the side: tow-away on some meters, or no parking any time on part of it, while you'd be there
-  const part=spans(O.parts,dayStart(T,-1),E).filter(i=>i.s<+E&&i.e>+T).map(i=>` ${i.r.lead?`${i.r.lead}${i.r.why?' '+i.r.why:''}`:`${i.r.n?`${i.r.n} of the ${i.r.of} metered spaces`:'Part of this side'}: ${i.r.why}`} ${spanTxt(i,T)}${i.r.after?`, ${i.r.after}`:''}.`)
+  const part=spans(O.parts,dayStart(T,-1),E).filter(i=>i.s<+E&&i.e>+T).map(i=>` ${i.r.lead?`${i.r.lead}${i.r.why?' '+i.r.why:''}`:`${i.r.n?`${i.r.n} of the ${i.r.of} metered spaces`:'Part of this side'}: ${i.r.why}`} ${spanTxt(i)}${i.r.after?`, ${i.r.after}`:''}.`)
     .filter((x,k,a)=>a.indexOf(x)===k).join('');
   const permit=r=>r&&r.areas?`, unless you have an area ${r.areas.replace(/,/g,' or ')} permit`:'';
   const atTxt=a=>!a?'':a.max?'72 hours is the longest a car can stay in one spot':a.limit?`${a.r.k==='pay'?'The meter\'s':'The'} ${hrs(a.lim)} limit${a.r.k==='limit'?` (${dayText(a.r.days)} ${hoursTxt(a.r.t0,a.r.t1)})`:''} runs out${permit(a.r)}`
-    :`${a.r.why} ${spanTxt(a,T)}`;
-  if(v.st==='no') return ['no',v.at.r.any?'No parking':'No parking now',v.at.r.any?'No parking any time on this side.':`${lead(`${v.at.r.why} until ${fmtAt(v.until,T)}`)}.${part}`];
+    :`${a.r.why} ${spanTxt(a)}`;
+  if(v.st==='no') return ['no',v.at.r.any?'No parking':'No parking now',v.at.r.any?'No parking any time on this side.':`${lead(`${v.at.r.why} until ${fmtAt(v.until)}`)}.${part}`];
   const pay=v.pays&&v.pays.length?(v.cost===null?'pay at the pay station or show an area permit':v.cost?`about ${money(Math.round(v.cost/5)*5)} at the meter`:'pay the meter'):'';
-  if(v.st==='move') return ['move',`Move by ${fmtAt(v.by,T)}`,`${lead(atTxt(v.at))}.${pay?` Before then, ${pay}.`:''}${part}`];
+  if(v.st==='move') return ['move',`Move by ${fmtAt(v.by)}`,`${lead(atTxt(v.at))}.${pay?` Before then, ${pay}.`:''}${part}`];
   if(v.st==='pay'){ const first=v.pays[0], last=v.pays[v.pays.length-1], lim=v.pays.find(i=>i.r.lim);
     const rate=first.r.rate===last.r.rate?`${money(first.r.rate)} an hour`:`${money(first.r.rate)} an hour, then ${money(last.r.rate)}`;
     return ['pay',v.cost===null?'Pay or permit':`Pay ${money(Math.round(v.cost/5)*5)}`,`${v.cost===null?`Pay or permit ${dayText(last.r.days)} ${hoursTxt(last.r.t0,last.r.t1)}${permit(last.r).replace(', unless you have',': or show')}`
-      :`${at?at+', ':''}${rate}${lim?`, ${hrs(lim.r.lim)} limit`:''}. Meters run until ${fmtAt(v.paidTo,T)}`}.${part}`]; }
-  const until=v.free>=+T+MAXSTAY?'Free, up to 72 hours':`Free until ${fmtAt(v.free,T)}`;
+      :`${at?at+', ':''}${rate}${lim?`, ${hrs(lim.r.lim)} limit`:''}. Meters run until ${fmtAt(v.paidTo)}`}.${part}`]; }
+  const until=v.free>=+T+MAXSTAY?'Free, up to 72 hours':`Free until ${fmtAt(v.free)}`;
   return ['ok',until,none?'No street cleaning, meter, time limit or permit area in the city\'s lists for this side.'
     :(at?at+'. ':'')+(v.freeAt&&!v.freeAt.max?(v.freeAt.r.k==='pay'?`Then meters${v.freeAt.r.rate?`, ${money(v.freeAt.r.rate)} an hour`:''}.`:`Then ${atTxt(v.freeAt).replace(/^./,c=>c.toLowerCase())}.`):'72 hours is the longest a car can stay in one spot.')+part]; }
 
@@ -1346,13 +1344,13 @@ function verdictTxt(b, s, T, E){
 function fillDriveTime(b){ const host=$('#dVerdict'); if(!host||host.dataset.id!==String(b.id)) return;
   const T=arrival(), E=leaving(T), sides=sidesOf(b), vs=sides.map(s=>[s,...verdictTxt(b,s,T,E)]);
   const same=vs.length===2&&vs[0].slice(1).join()===vs[1].slice(1).join(), show=same?[[null,...vs[0].slice(1)]]:vs;
-  host.innerHTML=`<div class="v-when">Arriving <b>${dayWord(T,sfNow())==='today'?'today':shortDate(T)}, ${fmtClock(T)}</b>, staying <b>${stay==='night'?`overnight, until ${fmtAt(+E,T)}`:`${stay} hour${stay==='1'?'':'s'}`}</b></div>
+  host.innerHTML=`<div class="v-when">Arriving <b>${dayWord(T,sfNow())==='today'?'today':shortDate(T)}, ${fmtClock(T)}</b>, staying <b>${stay==='night'?`overnight, until ${fmtAt(+E)}`:`${stay} hour${stay==='1'?'':'s'}`}</b></div>
     <div class="verdict${show.length===1?' one':''}">${show.map(([s,st,v,why])=>`<div class="${st}"><div class="k">${s===null?'Both sides':esc(sideName(b,s))}</div><div class="v">${esc(v)}</div><div class="why">${esc(why)}</div></div>`).join('')}</div>`;
   $('#dNow').innerHTML=meterNow(b,T); }
 // meters at the time picked, for the main meters on each side
 function meterNow(b, T){ const out=sidesOf(b).map(s=>{ const g=mainMeter(b,s); if(!g) return '';
     const R=sideOpts(b,s).opts[0].R.filter(r=>r.k==='pay'&&r.rate!==null), i=spans(R,dayStart(T,-1),dayStart(T,1)).find(i=>i.s<=+T&&i.e>+T);
-    return [sideWord(b,s),i?`${money(i.r.rate)} an hour${i.r.lim?`, ${hrs(i.r.lim)} limit`:''}, until ${fmtAt(i.e,T)}`:'meters off']; }).filter(Boolean);
+    return [sideWord(b,s),i?`${money(i.r.rate)} an hour${i.r.lim?`, ${hrs(i.r.lim)} limit`:''}, until ${fmtAt(i.e)}`:'meters off']; }).filter(Boolean);
   if(!out.length) return '';
   return `At the time picked: ${out.length===2&&out[0][1]===out[1][1]?`${out[0][1]} on both sides`:out.map(([w,t])=>`${esc(w)} side, ${t}`).join('; ')}.`; }
 
@@ -1369,10 +1367,11 @@ function ruleLines(b, s){ const L=[], mt=(b.mt||[]).filter(m=>m[0]===s), main=ma
     caps.forEach(c=>{ const wk=mt.filter(m=>m[1]===c).flatMap(m=>m[3]), k=mt.filter(m=>m[1]===c).reduce((a,m)=>a+m[2],0);
       const paid=meterWeek(wk.filter(p=>p[3]===0||(c<=1&&p[3]===1))), open=c>1?meterWeek(wk.filter(p=>p[3]===1)):[];
       const rates=wk.filter(p=>p[3]<=1&&p[4]).map(p=>p[4]), lims=[...new Set(wk.filter(p=>p[3]<=1&&p[5]&&p[5]<1440).map(p=>p[5]))].sort((a,z)=>a-z);
-      const who=caps.length>1||c?`${CAP_NAME[c][0].toUpperCase()+CAP_NAME[c].slice(1)} meters${c?` (${CAP_FOR[c]})`:''}`:'Meters';
-      if(!wk.length){ L.push(['var(--edge)',`${who}: no hours in SFMTA's list`,'']); return; }
+      // named by their color, their square is that color; general meters alone are just "Meters", in the pay blue
+      const named=caps.length>1||c, who=named?`${CAP_NAME[c][0].toUpperCase()+CAP_NAME[c].slice(1)} meters${c?` (${CAP_FOR[c]})`:''}`:'Meters', sq=named?CAP_COLOR[c]:'var(--park-pay)';
+      if(!wk.length){ L.push([sq,`${who}: no hours in SFMTA's list`,'']); return; }
       if(!paid.length&&!open.length) return;
-      L.push([c<=1?'var(--park-pay)':'var(--edge)',`${who} ${paid.length?listTxt(paid):''}${open.length?`${paid.length?'; ':''}open to all ${listTxt(open)}`:''}`,
+      L.push([sq,`${who} ${paid.length?listTxt(paid):''}${open.length?`${paid.length?'; ':''}open to all ${listTxt(open)}`:''}`,
         [rates.length?(Math.min(...rates)===Math.max(...rates)?`${money(rates[0])} an hour`:`${money(Math.min(...rates))} to ${money(Math.max(...rates))} an hour by the time of day`):'',
          lims.length?`${listTxt(lims.map(hrs))} limit`:''].filter(Boolean).join(', ')]); });
     // tow-away or another use: on which of the meters
@@ -1477,10 +1476,10 @@ async function fillDrive(b){
     <div class="card"><h4>City garages &amp; lots nearby</h4>${gar.length?`<table class="ktab">${gar.map(({g,m})=>`<tr><td>${esc(g[0])}<span class="sm-note" style="display:block;margin:0">${g[3]?'Garage':'Lot'}${g[5]?`, ${num(g[5])} spaces`:''}</span></td><td class="n">${Math.round(m/10)*10} m</td></tr>`).join('')}</table>`
       :'<div class="rule-line">No city-run garage or lot within 800 m.</div>'}<div class="evid">Only the garages and lots the city runs; privately run ones aren't in its open data.</div></div>
     <div class="card"><h4>Car break-ins at its corners</h4><div class="glance" style="grid-template-columns:minmax(0,1fr)">
-      <div><span class="k">Reported, ${range(P)}</span><span class="v">${num(cars)}</span></div></div>
+      <div><span class="v">${num(cars)}</span><span class="k">Reported, ${range(P)}</span></div></div>
       <div class="rank">${rankTxt(b,'cars','car break-ins')}</div></div>
     <div class="card"><h4>Cameras near here</h4>${near.length?`<table class="ktab">${near.map(({c,m})=>`<tr><td>${esc(camName(c))}</td><td class="n">${Math.round(m/10)*10} m</td></tr>`).join('')}</table>`
-      :'<div class="sm-note" style="margin-top:0">No speed or red-light cameras within 500 m.</div>'}</div>
+      :'<div class="rule-line">No speed or red-light cameras within 500 m.</div>'}</div>
     <div class="card-end">This card is worked out from SFMTA citations recorded since ${since} and the city's lists of parking rules as of this week. Ticket history may not include every rule that applies here.</div>`;
   if(b.tk&&b.tk.length) ticketKinds($('#dTix'),b); else $('#dTix').innerHTML=`<div class="rule-line">No SFMTA tickets were written on this block since ${since}.</div>`;
   fillDriveTime(b);
@@ -1524,13 +1523,13 @@ async function fillWalk(){
     :`No street ${within} is on the High Injury <span class="nb">Network${INFO}.</span>`;
   // pedestrians hit goes last, after the police cards
   let hc=`<div class="card"><h4>Pedestrians hit</h4><div class="glance" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-    <div><span class="k">Badly hurt or killed by a car</span><span class="v">${bad}</span></div>
-    <div><span class="k">High Injury Network streets</span><span class="v">${hinNames.length}</span></div></div>
+    <div><span class="v">${bad}</span><span class="k">Badly hurt or killed by a car</span></div>
+    <div><span class="v">${hinNames.length}</span><span class="k">High Injury Network streets</span></div></div>
     <div class="sm-note">${hit.length?`${num(hit.length)} ${hit.length===1?'person':'people'} walking ${hit.length===1?'was':'were'} hit by a car`:'No one walking was hit by a car'} ${within}, ${range(C)}${whenTxt()}.${killed?` ${killed===1?'One person was':killed+' people were'} killed.`:''}
     ${hinTxt}</div>${rank('hit',hit.length,'people walking hit')}`;
   if(hit.length){
     const byH=new Array(24).fill(0); hit.forEach(x=>byH[x[2]]++);
-    hc+=hourChart('What time of day they were hit',byH.map(n=>[[n,'var(--walk-soft)']]),'People walking hit by the hour');
+    hc+=hourChart('What time of day they were hit',byH.map(n=>[[n,'var(--walk)']]),'People walking hit by the hour');
     if(walkWhen==='any'){ const dk=hit.filter(x=>x[4]).length; hc+=`<div class="sm-note">${dk} of ${hit.length} after dark.</div>`; }
     const why={}; hit.forEach(x=>{ why[x[5]]=(why[x[5]]||0)+1; });
     hc+=`<div class="sm-note" style="margin-top:12px">Main cause in the police report:</div><table class="ktab">${Object.entries(why).sort((a,c)=>c[1]-a[1]).slice(0,3)
@@ -1813,9 +1812,11 @@ function buildSummary(){
     +`The hour with the most people hit was ${hourTxt(pk)} to ${hourTxt(pk+1)} (${byH[pk][0]+byH[pk][1]}). Police reports of violence and robbery were fewest from ${hourTxt(pMin)} to ${hourTxt(pMin+1)} and most from ${hourTxt(pMax)} to ${hourTxt(pMax+1)}${pm?`, and by month most in ${MON[pmT.indexOf(Math.max(...pmT))]} and fewest in ${MON[pmT.indexOf(Math.min(...pmT))]}`:''}.`;
 
   // where: around the places visitors go, then the neighborhoods and corners with the most
-  const top=k=>Z.places.reduce((a,p)=>p[k]>a[k]?p:a);
+  // the places with the most (all of them when there's a tie, in the table's order), and how many
+  const top=k=>{ const mx=Math.max(...Z.places.map(p=>p[k])), names=Z.places.filter(p=>p[k]===mx).map(p=>p[0]).sort((a,b)=>a.localeCompare(b));
+    return `${esc(listTxt(names))} (${num(mx)}${names.length>1?' each':''})`; };
   $('#sumWhere').innerHTML=`<b>Around the places visitors go</b>, within ${Z.place_m} m (about ${num(Math.round(Z.place_m*3.28084/50)*50)} ft, a ${Math.round(Z.place_m/80)}-minute walk), in two years.`
-    +` Most people walking hit: ${esc(top(3)[0])} (${top(3)[3]}). Most reports of violence and robbery: ${esc(top(5)[0])} (${num(top(5)[5])}). “Top 2%” means 98% of the city's ${num(Z.intersections)} intersections have fewer within the same distance. Tap a place to see it on the map and the card.`;
+    +` Most people walking hit: ${top(3)}. Most reports of violence and robbery: ${top(5)}. “Top 2%” means 98% of the city's ${num(Z.intersections)} intersections have fewer within the same distance. Tap a place to see it on the map and the card.`;
   renderPlaces();
   const hoodList=(el,k,fmt)=>{ el.innerHTML=''; META.hoods.map((h,i)=>[h,META.hood_stats[i]]).filter(([,s])=>s[0]).sort((a,b)=>b[1][k]/b[1][0]-a[1][k]/a[1][0]).slice(0,5)
     .forEach(([h,s],i)=>{ const li=H('li',{},el); li.dataset.n=i+1; const b=H('button',{className:'plink',textContent:h},li); H('span',{className:'v',textContent:fmt(s[k]/s[0])},li);
@@ -1854,8 +1855,8 @@ function buildDriveSummary(){
   $('#dsumStats').innerHTML=[[num(n),'parking tickets in two years'],[pct(sweep[1],n)+'%','were for street cleaning'],[`$${T.fines[T.sweep]}`,'for a street-cleaning ticket now'],
     [pct(hitDays,posted)+'%','of cleaning days on a side of a block brought at least one ticket']].map(([v,k])=>`<div><span class="v">${v}</span><span class="k">${k}</span></div>`).join('');
   // when: by hour and weekday, street cleaning under the rest
-  bars($('#dchHour'),Z.hour.map(([a,o])=>[[a,'var(--drive-3)'],[o,'var(--drive-1)']]),HOUR_AX,h=>`${hourTxt(h)} to ${hourTxt(h+1)}: ${num(Z.hour[h][0]+Z.hour[h][1])} tickets, ${num(Z.hour[h][0])} street cleaning`);
-  bars($('#dchDow'),Z.dow.map(([a,o])=>[[a,'var(--drive-3)'],[o,'var(--drive-1)']]),DAYS.map((d,i)=>[(i+.5)*100/7,d]),i=>`${DAYLONG[i]}: ${num(Z.dow[i][0]+Z.dow[i][1])} tickets, ${num(Z.dow[i][0])} street cleaning`);
+  bars($('#dchHour'),Z.hour.map(([a,o])=>[[a,'var(--drive-3)'],[o,'var(--drive-2)']]),HOUR_AX,h=>`${hourTxt(h)} to ${hourTxt(h+1)}: ${num(Z.hour[h][0]+Z.hour[h][1])} tickets, ${num(Z.hour[h][0])} street cleaning`);
+  bars($('#dchDow'),Z.dow.map(([a,o])=>[[a,'var(--drive-3)'],[o,'var(--drive-2)']]),DAYS.map((d,i)=>[(i+.5)*100/7,d]),i=>`${DAYLONG[i]}: ${num(Z.dow[i][0]+Z.dow[i][1])} tickets, ${num(Z.dow[i][0])} street cleaning`);
   const hs=Z.hour.map(h=>h[0]+h[1]), pk=hs.indexOf(Math.max(...hs)), sw=Z.hour.map(h=>h[0]), spk=sw.indexOf(Math.max(...sw)), dw=Z.dow.map(d=>d[0]+d[1]);
   const lo=dw.indexOf(Math.min(...dw)), hi=dw.indexOf(Math.max(...dw));
   $('#dsumWhen').innerHTML=`The hour with the most tickets was ${hourTxt(pk)} to ${hourTxt(pk+1)} (${num(hs[pk])}); street-cleaning tickets peak from ${hourTxt(spk)} to ${hourTxt(spk+1)}. ${DAYLONG[hi]} had the most tickets (${num(dw[hi])}) and ${DAYLONG[lo]} the fewest (${num(dw[lo])}), ${pct(dw[lo],sum(dw)/7)}% of an average day's.`;
@@ -1907,9 +1908,7 @@ function legend(){ const near=vb.w*PX_M<=SHOW_M, m=mode(), key=[near,!!selected,
     [['ok','Free for your stay'],['pay','Pay at the meter'],['move','Have to move before your stay ends'],['no','No parking when you arrive']]
       .forEach(([k,t])=>item(`height:5px;border-radius:3px;background:var(--park-${k});${bg}`,t));
     H('li',{textContent:`Each side of the street is its own line, for ${at} and ${stay==='night'?'overnight':stay+' hr'}`},lg); }
-  if(near&&META&&m==='drive'&&layers.tickets){ item(`width:64px;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--drive-1),var(--drive-2),var(--drive-3),var(--drive-4));${bg}`,'Tickets per month on the block, fewer to more');
-    item(`height:6px;border-radius:3px;background:var(--park-none);${bg}`,'No tickets in two years'); }
-  if(near&&META&&m==='drive'){ if(!layers.park&&!layers.tickets) item(`height:6px;border-radius:3px;background:var(--map-line);${bg}`,'Tap a block to pick it');
+  if(near&&META&&m==='drive'){ if(!layers.park) item(`height:6px;border-radius:3px;background:var(--map-line);${bg}`,'Tap a block to pick it');
     if(selected) item(`height:12px;border-radius:6px;background:var(--${layers.park?'walk-line':'map-line'});border:2px solid var(--map-sel);box-shadow:0 0 0 2px var(--map-bg)`,'The block you picked'); }
   if(m==='walk'&&META){
     if(near&&layers.hin) item(`height:6px;border-radius:3px;background:var(--walk);${bg}`,'High Injury Network').insertAdjacentHTML('beforeend',INFO);
@@ -1941,6 +1940,12 @@ let sized=hasSize(), lastW=wrap.clientWidth, lastH=wrap.clientHeight, rt=0;
 new ResizeObserver(()=>{ const w=wrap.clientWidth, h=wrap.clientHeight; if(!w||!h||(w===lastW&&h===lastH)) return; lastW=w; lastH=h;
   if(!sized){ sized=true; if(spot) jumpTo(spot.x,spot.y,spotView()); else fitSF(); return; }
   clearTimeout(rt); rt=setTimeout(()=>centerOn(vb.x+vb.w/2,vb.y+vb.h/2,vb.w),150); }).observe(wrap);
+
+// beside the card, the map column stops with its bottom on screen when it's taller than the window, so the legend under
+// the map stays readable while the card scrolls
+const mapcol=$('.mapcol');
+function stick(){ mapcol.style.top=stacked()?'':Math.min(12,innerHeight-mapcol.offsetHeight-12)+'px'; }
+new ResizeObserver(stick).observe(mapcol); addEventListener('resize',stick);
 
 showRadius(); applyLayers(); renderPanel(); ready=true;
 })();
