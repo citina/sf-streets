@@ -10,7 +10,7 @@ Street cleaning alone is 41% of the 2.5 million parking tickets SFMTA wrote in t
 decide whether you can park are spread across half a dozen city lists: sweeping schedules, meters, time limits, permit
 areas, tow-away zones, today's closures and temporary signs. SF Streets reads them all for every one of the city's
 15,142 blocks and puts the answer on one card. It's the San Francisco sister of
-[LA Street Rules](https://citina.github.io/ticket-clock/streets/), built from [DataSF](https://data.sf.gov) and rebuilt
+[LA Street Rules](https://citina.github.io/la-streets/streets/), built from [DataSF](https://data.sf.gov) and rebuilt
 every week.
 
 ![Searching for 500 Valencia St, seeing if you can park there, opening its street-cleaning signs, then switching to walking](readme/demo.gif)
@@ -113,7 +113,7 @@ then open http://localhost:8765/ (add `#walk` for the walking view).
 
 [Citina Liang](https://github.com/citina), a PhD candidate in Industrial & Systems Engineering at USC Viterbi who
 models how people behave and how diseases spread, with Claude Code, from first commit to both sides of the map in
-three days (25–27 Sep 2026). Its sisters are [LA Street Rules](https://citina.github.io/ticket-clock/streets/)
-([ticket-clock](https://github.com/citina/ticket-clock)) and [Curb Log](https://github.com/citina/curb-log).
+three days (25–27 Sep 2026). Its sisters are [LA Street Rules](https://citina.github.io/la-streets/streets/)
+([la-streets](https://github.com/citina/la-streets)) and [Curb Log](https://github.com/citina/curb-log).
 
 Map © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Data from [DataSF](https://data.sf.gov).

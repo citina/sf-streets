@@ -1,6 +1,6 @@
 # SF Streets — plan
 
-Working title. A map of San Francisco in the style of [LA Street Rules](https://citina.github.io/ticket-clock/streets/),
+Working title. A map of San Francisco in the style of [LA Street Rules](https://citina.github.io/la-streets/streets/),
 but the page changes with who's asking:
 
 - **I'm driving** → *Can I park here, until when, and what gets ticketed on this block?*
